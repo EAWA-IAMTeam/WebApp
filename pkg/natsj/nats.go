@@ -1,4 +1,4 @@
-package natsc
+package natsj
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 	"github.com/nats-io/nats.go/micro"
 )
 
-// NatsConfig holds the configuration for the NATS client
+// NatsConfig holds the configuration for the NATS client.
 type NatsConfig struct {
 	NatsUrl            string
 	NatsServiceName    string
@@ -17,33 +17,39 @@ type NatsConfig struct {
 	Timeout            time.Duration
 }
 
-// NatsClient is an interface for the NATS client
+// NatsClient defines the interface for the NATS client.
 type NatsClient interface {
 	Publish(subject string, msg []byte) error
 	Subscribe(subject string, handler func(msg *nats.Msg)) (*nats.Subscription, error)
 	Request(subject string, msg []byte) (*nats.Msg, error)
 	Authorize(authSubject string, requestPayload []byte) (bool, error)
 	Disconnect()
+	// JetStream methods
+	AddStream(cfg *nats.StreamConfig) (*nats.StreamInfo, error)
+	DeleteStream(name string) error
+	AddConsumer(stream string, cfg *nats.ConsumerConfig) (*nats.ConsumerInfo, error)
+	DeleteConsumer(stream, consumer string) error
 }
 
-// natsClient is the implementation of the NatsClient interface
+// natsClient implements the NatsClient interface.
 type natsClient struct {
-	Conn    *nats.Conn
-	Service micro.Service
-	Timeout time.Duration
+	Conn      *nats.Conn
+	Service   micro.Service
+	Timeout   time.Duration
+	JetStream nats.JetStreamContext
 }
 
-// Publisher send a message to the specified subject
+// Publish sends a message to the specified subject.
 func (n *natsClient) Publish(subject string, msg []byte) error {
 	return n.Conn.Publish(subject, msg)
 }
 
-// Subscribe sets up a subscription to the specified subject
+// Subscribe sets up a subscription to the specified subject.
 func (n *natsClient) Subscribe(subject string, handler func(msg *nats.Msg)) (*nats.Subscription, error) {
 	return n.Conn.Subscribe(subject, handler)
 }
 
-// Request sends a request and waits for a response
+// Request sends a request and waits for a response.
 func (n *natsClient) Request(subject string, msg []byte) (*nats.Msg, error) {
 	return n.Conn.Request(subject, msg, n.Timeout)
 }
@@ -52,7 +58,7 @@ func (n *natsClient) Request(subject string, msg []byte) (*nats.Msg, error) {
 func (n *natsClient) Authorize(authSubject string, requestPayload []byte) (bool, error) {
 	response, err := n.Request(authSubject, requestPayload)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("authorization request failed: %w", err)
 	}
 	return string(response.Data) == "authorized", nil
 }
@@ -99,10 +105,37 @@ func NewNatsClient(config *NatsConfig) (NatsClient, error) {
 		return nil, fmt.Errorf("failed to add NATS service: %w", err)
 	}
 
+	js, err := nc.JetStream()
+	if err != nil {
+		nc.Close()
+		return nil, fmt.Errorf("failed to initialize JetStream: %w", err)
+	}
+
 	fmt.Println("connected to nats")
 	return &natsClient{
-		Conn:    nc,
-		Service: srv,
-		Timeout: config.Timeout,
+		Conn:      nc,
+		Service:   srv,
+		Timeout:   config.Timeout,
+		JetStream: js,
 	}, nil
+}
+
+// AddStream adds a new JetStream stream.
+func (n *natsClient) AddStream(cfg *nats.StreamConfig) (*nats.StreamInfo, error) {
+	return n.JetStream.AddStream(cfg)
+}
+
+// DeleteStream deletes a JetStream stream.
+func (n *natsClient) DeleteStream(name string) error {
+	return n.JetStream.DeleteStream(name)
+}
+
+// AddConsumer adds a new JetStream consumer.
+func (n *natsClient) AddConsumer(stream string, cfg *nats.ConsumerConfig) (*nats.ConsumerInfo, error) {
+	return n.JetStream.AddConsumer(stream, cfg)
+}
+
+// DeleteConsumer deletes a JetStream consumer.
+func (n *natsClient) DeleteConsumer(stream, consumer string) error {
+	return n.JetStream.DeleteConsumer(stream, consumer)
 }
