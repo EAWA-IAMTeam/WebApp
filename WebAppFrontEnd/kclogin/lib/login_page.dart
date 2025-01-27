@@ -24,7 +24,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> fetchKeycloakConfig() async {
-    final url = Uri.parse('http://localhost:3002/keycloak-config');
+    final url = Uri.parse('${Config.server}:3002/keycloak-config');
 
     try {
       final response = await http.get(url);
@@ -152,6 +152,7 @@ class _LoginPageState extends State<LoginPage> {
               setLocalStorage('googleAccessToken', googleAccessToken);
               setLocalStorage('email', keycloakTokens['email']);
               setLocalStorage('logoutBool', "false");
+              await passTokensBackToMainApp();
               await Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
@@ -314,6 +315,17 @@ class _LoginPageState extends State<LoginPage> {
       print(response.body);
     }
   }
+
+  Future<void> passTokensBackToMainApp() async {
+  final keycloakAccessToken = await getLocalStorage('keycloakAccessToken');
+  final keycloakEmail = await getLocalStorage('email');
+  
+  // Sending tokens back to port 3000 (main app) via window messaging
+  html.window.postMessage({
+    'keycloakAccessToken': keycloakAccessToken,
+    'email': keycloakEmail,
+  }, '*');
+}
 
   @override
   Widget build(BuildContext context) {

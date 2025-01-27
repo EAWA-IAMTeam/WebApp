@@ -280,7 +280,7 @@ class _HomePageState extends State<HomePage> {
   }
 
  Future<void> fetchKeycloakConfig() async {
-    final url = Uri.parse('http://localhost:3002/keycloak-config');
+    final url = Uri.parse('${Config.server}:3002/keycloak-config');
 
     try {
       final response = await http.get(url);
@@ -330,7 +330,21 @@ class _HomePageState extends State<HomePage> {
                         // First Row with Select Company, Create Company, and Join Company
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: [                         
+                          children: [ 
+                            const SizedBox(width: 10),
+                            ElevatedButton(
+                              onPressed: () {
+                                
+                              },
+                              child: const Text('Link Store'),
+                            ),
+                            const SizedBox(width: 10),
+                            ElevatedButton(
+                              onPressed: () {
+                                
+                              },
+                              child: const Text('Link Inventory'),
+                            ),                        
                             const SizedBox(width: 10),
                             ElevatedButton(
                               onPressed: () {

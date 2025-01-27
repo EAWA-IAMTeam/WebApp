@@ -44,6 +44,7 @@ class _HomePageState extends State<HomePage>
     _tabController = TabController(length: 2, vsync: this);
     store = Store.fromJson(jsonData);
     inventory = Inventory.fromJson(jsondata);
+    _listenForTokenMessage();
   }
 
   @override
@@ -124,7 +125,8 @@ class _HomePageState extends State<HomePage>
               ElevatedButton(
                 onPressed: () {
                   // html.window.location.href = 'http://localhost:3001'; //Redirect user to another app in same tab
-                  html.window.open('http://192.168.0.230:3001', '_blank'); //Open the web app in another new window
+                  html.window.open('http://localhost:3001', '_blank'); //Open the web app in another new window
+                  //192.168.0.102:8000
                   _listenForTokenMessage();
                 },
                 style: ElevatedButton.styleFrom(
