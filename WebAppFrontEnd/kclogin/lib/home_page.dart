@@ -46,44 +46,64 @@ class _HomePageState extends State<HomePage> {
   //   html.document.cookie = '$name=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
   // }
 
-Future<void> setCookie(String name, String value) async {
-  final url = Uri.parse('http://localhost:3002/setCookie?name=$name&value=$value');
-  final response = await http.post(url);
+// Future<void> setCookie(String name, String value) async {
+//   final url = Uri.parse('http://localhost:3002/setCookie?name=$name&value=$value');
+//   final response = await http.post(url);
 
-  if (response.statusCode == 200) {
-    print('Cookie set successfully');
-  } else {
-    print('Failed to set cookie');
+//   if (response.statusCode == 200) {
+//     print('Cookie set successfully');
+//   } else {
+//     print('Failed to set cookie');
+//   }
+// }
+
+// Future<void> deleteCookie(String name) async {
+//   final url = Uri.parse('http://localhost:3002/deleteCookie?name=$name');
+//   final response = await http.delete(url);
+
+//   if (response.statusCode == 200) {
+//     print('Cookie deleted successfully');
+//   } else {
+//     print('Failed to delete cookie');
+//   }
+// }
+
+// Future<String?> getCookie(String name) async {
+//   final url = Uri.parse('http://localhost:3002/getCookie?name=$name');
+//   final response = await http.get(url);
+
+//   if (response.statusCode == 200) {
+//     return response.body;
+//   } else {
+//     print('Failed to retrieve cookie');
+//     return null;
+//   }
+// }
+
+  Future<String?> getLocalStorage(String key) async {
+    print('Name: ' + key);
+    return html.window.localStorage[key];
+  }
+
+  Future<void> setLocalStorage(String key, String value) async {
+    print('Local Storage set successfully: $key=$value');
+    html.window.localStorage[key] = value;
+  }
+
+  Future<void> deleteLocalStorage(String name) async {
+  try {
+    html.window.localStorage.remove(name);
+    print('Local storage item deleted successfully: $name');
+  } catch (e) {
+    print('Failed to delete local storage item: $e');
   }
 }
 
-Future<void> deleteCookie(String name) async {
-  final url = Uri.parse('http://localhost:3002/deleteCookie?name=$name');
-  final response = await http.delete(url);
-
-  if (response.statusCode == 200) {
-    print('Cookie deleted successfully');
-  } else {
-    print('Failed to delete cookie');
-  }
-}
-
-Future<String?> getCookie(String name) async {
-  final url = Uri.parse('http://localhost:3002/getCookie?name=$name');
-  final response = await http.get(url);
-
-  if (response.statusCode == 200) {
-    return response.body;
-  } else {
-    print('Failed to retrieve cookie');
-    return null;
-  }
-}
 
   Future<void> _logout(BuildContext context) async {
     // Revoke Google Access Token by calling Google's revocation endpoint
     //final googleAccessToken = html.window.localStorage['googleAccessToken'];
-    final googleAccessToken = await getCookie('googleAccessToken');
+    final googleAccessToken = await getLocalStorage('googleAccessToken');
     print("GAT: $googleAccessToken");
     if (googleAccessToken != null) {
       final revokeUrl =
@@ -111,14 +131,14 @@ Future<String?> getCookie(String name) async {
     // html.window.localStorage['logoutBool'] = "true";
 
      // Clear cookies
-    deleteCookie('keycloakAccessToken');
-    deleteCookie('keycloakRefreshToken');
-    deleteCookie('googleAccessToken');
-    deleteCookie('email');
-    await deleteCookie('logoutBool');
+    deleteLocalStorage('keycloakAccessToken');
+    deleteLocalStorage('keycloakRefreshToken');
+    deleteLocalStorage('googleAccessToken');
+    deleteLocalStorage('email');
+    await deleteLocalStorage('logoutBool');
 
     // Set logoutBool to true
-    setCookie('logoutBool', "true");
+    setLocalStorage('logoutBool', "true");
 
     // Clear cookies with domain "accounts.google.com"
     _clearGoogleCookies();
@@ -303,9 +323,9 @@ Future<String?> getCookie(String name) async {
                         //Text(
                         //    'Keycloak Access Token: ${widget.keycloakAccessToken}'),
                         //SizedBox(height: 10),
-                        Text(
-                            'Keycloak Refresh Token: ${widget.keycloakRefreshToken}'),
-                        const SizedBox(height: 20),
+                        // Text(
+                        //     'Keycloak Refresh Token: ${widget.keycloakRefreshToken}'),
+                        // const SizedBox(height: 20),
 
                         // First Row with Select Company, Create Company, and Join Company
                         Row(

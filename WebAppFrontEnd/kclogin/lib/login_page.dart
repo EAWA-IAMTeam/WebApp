@@ -55,42 +55,51 @@ class _LoginPageState extends State<LoginPage> {
     }
     return true;
   }
+  //  Future<String?> getCookie(String name) async {
+  //   final url = Uri.parse('http://localhost:3002/getCookie?name=$name');
+  //   final response = await http.get(url);
 
-  Future<String?> getCookie(String name) async {
-    final url = Uri.parse('http://localhost:3002/getCookie?name=$name');
-    final response = await http.get(url);
+  //   if (response.statusCode == 200) {
+  //     return response.body;
+  //   } else {
+  //     print('Failed to retrieve cookie');
+  //     return null;
+  //   }
+  // }
 
-    if (response.statusCode == 200) {
-      return response.body;
-    } else {
-      print('Failed to retrieve cookie');
-      return null;
-    }
+  // Future<void> setCookie(String name, String value) async {
+  //   final url = Uri.parse('http://localhost:3002/setCookie?name=$name&value=$value');
+
+  //   final response = await http.post(
+  //     url,
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //   );
+
+  //   if (response.statusCode == 200) {
+  //     print('Cookie set successfully: $name=$value');
+  //   } else {
+  //     print('Failed to set cookie');
+  //   }
+  // }
+
+  Future<String?> getLocalStorage(String key) async {
+    print('Name: ' + key);
+    return html.window.localStorage[key];
   }
 
-  Future<void> setCookie(String name, String value) async {
-    final url = Uri.parse('http://localhost:3002/setCookie?name=$name&value=$value');
-
-    final response = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      print('Cookie set successfully: $name=$value');
-    } else {
-      print('Failed to set cookie');
-    }
+  Future<void> setLocalStorage(String key, String value) async {
+    print('Local Storage set successfully: $key=$value');
+    html.window.localStorage[key] = value;
   }
 
   Future<void> _checkForKeycloakToken() async {
-    final keycloakAccessToken = await getCookie('keycloakAccessToken');
-    final keycloakRefreshToken = await getCookie('keycloakRefreshToken');
-    final googleAccessToken = await getCookie('googleAccessToken');
-    final keycloakEmail = await getCookie('email');
-    logoutBool = (await getCookie('logoutBool')) ?? "true";
+    final keycloakAccessToken = await getLocalStorage('keycloakAccessToken');
+    final keycloakRefreshToken = await getLocalStorage('keycloakRefreshToken');
+    final googleAccessToken = await getLocalStorage('googleAccessToken');
+    final keycloakEmail = await getLocalStorage('email');
+    logoutBool = (await getLocalStorage('logoutBool')) ?? "true";
 
     if (logoutBool == "true") {
       print("Redirecting to Google sign-in due to logoutBool.");
@@ -138,11 +147,11 @@ class _LoginPageState extends State<LoginPage> {
 
             if (userExists) {
               print('User exists in Keycloak. Redirecting to homepage.');
-              setCookie('keycloakAccessToken', keycloakTokens['access_token']);
-              setCookie('keycloakRefreshToken', keycloakTokens['refresh_token']);
-              setCookie('googleAccessToken', googleAccessToken);
-              setCookie('email', keycloakTokens['email']);
-              setCookie('logoutBool', "false");
+              setLocalStorage('keycloakAccessToken', keycloakTokens['access_token']);
+              setLocalStorage('keycloakRefreshToken', keycloakTokens['refresh_token']);
+              setLocalStorage('googleAccessToken', googleAccessToken);
+              setLocalStorage('email', keycloakTokens['email']);
+              setLocalStorage('logoutBool', "false");
               await Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
@@ -211,7 +220,7 @@ class _LoginPageState extends State<LoginPage> {
     if (response.statusCode == 200) {
       var data = json.decode(response.body);
       data['email'] = await _getUserEmail(data['access_token']);
-      setCookie('logoutBool', "false");
+      setLocalStorage('logoutBool', "false");
       return data;
     } else {
       print(response.statusCode);
