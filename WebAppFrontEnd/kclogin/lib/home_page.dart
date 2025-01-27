@@ -341,7 +341,7 @@ class _HomePageState extends State<HomePage> {
                             const SizedBox(width: 10),
                             ElevatedButton(
                               onPressed: () {
-                                
+                                html.window.location.href = 'http://localhost:3003';
                               },
                               child: const Text('Link Inventory'),
                             ),                        
