@@ -32,7 +32,8 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late Store store;
   late Inventory inventory;
@@ -49,6 +50,18 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _listenForTokenMessage() {
+    html.window.onMessage.listen((event) {
+      final data = event.data;
+      if (data != null) {
+        // Save the tokens to localStorage
+        html.window.localStorage['keycloakAccessToken'] =
+            data['keycloakAccessToken'];
+        html.window.localStorage['email'] = data['email'];
+      }
+    });
   }
 
   @override
@@ -111,7 +124,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               ElevatedButton(
                 onPressed: () {
                   // html.window.location.href = 'http://localhost:3001'; //Redirect user to another app in same tab
-                  html.window.open('http://localhost:3001', '_blank');    //Open the web app in another new 
+                  html.window.open('http://192.168.0.230:3001', '_blank'); //Open the web app in another new window
+                  _listenForTokenMessage();
                 },
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(
@@ -122,8 +136,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               ),
               const SizedBox(height: 10),
               ElevatedButton(
-                onPressed: () {           
-                },
+                onPressed: () {},
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(4),
