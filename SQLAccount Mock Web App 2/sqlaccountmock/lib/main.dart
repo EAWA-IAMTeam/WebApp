@@ -53,6 +53,7 @@ class _HomePageState extends State<HomePage>
     store = Store.fromJson(jsonData);
     inventory = Inventory.fromJson(jsondata);
     _listenForTokenMessage();
+    saveProduct("1011", "Description 11", 11, 2000);
     loadAllProducts();
   }
 
