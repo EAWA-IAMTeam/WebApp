@@ -1,6 +1,9 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:html' as html;
+import 'package:http/http.dart' as http;
 // Import the Inventory and Store classes
 import 'inventory.dart';
 import 'store.dart';
@@ -38,6 +41,9 @@ class _HomePageState extends State<HomePage>
   late Store store;
   late Inventory inventory;
 
+  // Add a variable to store fetched products
+  List<Map<String, dynamic>> _products = [];
+
   @override
   void initState() {
     super.initState();
@@ -63,6 +69,38 @@ class _HomePageState extends State<HomePage>
         html.window.localStorage['email'] = data['email'];
       }
     });
+  }
+
+  Future<void> fetchProducts(int storeId) async {
+    try {
+      final response = await http.get(
+          Uri.parse('http://192.168.0.73:5000/api/products?store_id=$storeId'));
+
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        print("Get Product successfully");
+        print(response.body);
+
+        // Update the _products list and call setState
+        setState(() {
+          _products = data.map((product) {
+            return {
+              'id': product['id'],
+              'price': product['price'],
+              'discounted_price': product['discounted_price'],
+              'sku': product['sku'],
+              'currency': product['currency'],
+              'status': product['status'],
+              'stock_item_id': product['stock_item_id'],
+            };
+          }).toList();
+        });
+      } else {
+        throw Exception('Failed to load products');
+      }
+    } catch (e) {
+      throw Exception('Failed to load products: $e');
+    }
   }
 
   @override
@@ -112,6 +150,35 @@ class _HomePageState extends State<HomePage>
                         Text('Description: ${inventory.description}'),
                         Text('Quantity: ${inventory.quantity}'),
                         Text('Cost: RM${inventory.cost}'),
+                        // Display the fetched products here
+                        _products.isNotEmpty
+                            ? Expanded(
+                                child: ListView.builder(
+                                  itemCount: _products.length,
+                                  itemBuilder: (context, index) {
+                                    final product = _products[index];
+                                    return Card(
+                                      margin: const EdgeInsets.all(8.0),
+                                      child: ListTile(
+                                        title: Text('SKU: ${product['sku']}'),
+                                        subtitle: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                                'Price: RM${product['price']}'),
+                                            Text(
+                                                'Discounted Price: RM${product['discounted_price']}'),
+                                            Text(
+                                                'Stock Item ID: ${product['stock_item_id']}'),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              )
+                            : const Text('No products available')
                       ],
                     ),
                   ),
@@ -125,7 +192,8 @@ class _HomePageState extends State<HomePage>
               ElevatedButton(
                 onPressed: () {
                   // html.window.location.href = 'http://localhost:3001'; //Redirect user to another app in same tab
-                  html.window.open('http://localhost:3001', '_blank'); //Open the web app in another new window
+                  html.window.open('http://localhost:3001',
+                      '_blank'); //Open the web app in another new window
                   //192.168.0.102:8000
                   _listenForTokenMessage();
                 },
@@ -138,13 +206,15 @@ class _HomePageState extends State<HomePage>
               ),
               const SizedBox(height: 10),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  fetchProducts(2);
+                },
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
-                child: const Text('Fetch'),
+                child: const Text('Fetch'), // Fetch from ecommerce web app
               ),
               const SizedBox(height: 10),
               ElevatedButton(
@@ -154,7 +224,8 @@ class _HomePageState extends State<HomePage>
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
-                child: const Text('Post'),
+                child: const Text(
+                    'Post'), //post to ecommerce web app from mock sql account
               ),
             ],
           ),

@@ -5,6 +5,7 @@ import 'dart:html' as html;
 import 'package:http/http.dart' as http;
 import 'package:kclogin/config.dart';
 import 'package:kclogin/login_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
   final String googleAccessToken;
@@ -91,14 +92,13 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> deleteLocalStorage(String name) async {
-  try {
-    html.window.localStorage.remove(name);
-    print('Local storage item deleted successfully: $name');
-  } catch (e) {
-    print('Failed to delete local storage item: $e');
+    try {
+      html.window.localStorage.remove(name);
+      print('Local storage item deleted successfully: $name');
+    } catch (e) {
+      print('Failed to delete local storage item: $e');
+    }
   }
-}
-
 
   Future<void> _logout(BuildContext context) async {
     // Revoke Google Access Token by calling Google's revocation endpoint
@@ -130,7 +130,7 @@ class _HomePageState extends State<HomePage> {
     // html.window.localStorage.remove('email');
     // html.window.localStorage['logoutBool'] = "true";
 
-     // Clear cookies
+    // Clear cookies
     deleteLocalStorage('keycloakAccessToken');
     deleteLocalStorage('keycloakRefreshToken');
     deleteLocalStorage('googleAccessToken');
@@ -279,7 +279,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
- Future<void> fetchKeycloakConfig() async {
+  Future<void> fetchKeycloakConfig() async {
     final url = Uri.parse('${Config.server}:3002/keycloak-config');
 
     try {
@@ -298,7 +298,17 @@ class _HomePageState extends State<HomePage> {
       print('Error fetching Keycloak config: $e');
     }
   }
-  
+
+  void _launchURL() async {
+    const url = 'http://localhost:3003'; // URL to redirect to
+    final Uri uri = Uri.parse(url); // Convert the string URL to a Uri object
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -330,21 +340,20 @@ class _HomePageState extends State<HomePage> {
                         // First Row with Select Company, Create Company, and Join Company
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: [ 
+                          children: [
                             const SizedBox(width: 10),
                             ElevatedButton(
-                              onPressed: () {
-                                
-                              },
+                              onPressed: () {},
                               child: const Text('Link Store'),
                             ),
                             const SizedBox(width: 10),
                             ElevatedButton(
                               onPressed: () {
                                 html.window.location.href = 'http://localhost:3003';
+                                // _launchURL();
                               },
                               child: const Text('Link Inventory'),
-                            ),                        
+                            ),
                             const SizedBox(width: 10),
                             ElevatedButton(
                               onPressed: () {

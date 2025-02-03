@@ -238,7 +238,7 @@ class _LoginPageState extends State<LoginPage> {
         } else {
           print('User does not exist in Keycloak.');
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text("Please register to use this application.")));
+              content: Text("Please contact our support team for more information. +603-3341 6909")));
         }
       }
     }
