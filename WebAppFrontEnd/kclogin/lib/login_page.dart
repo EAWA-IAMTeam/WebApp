@@ -16,6 +16,10 @@ class _LoginPageState extends State<LoginPage> {
   String kcid = '';
   String kcsecret = '';
   String logoutBool = "true";
+  String googleId = '';
+  String googleEmail = '';
+  String googleUserName = '';
+  String kcUserId = '';
 
   @override
   void initState() {
@@ -47,7 +51,8 @@ class _LoginPageState extends State<LoginPage> {
     List<String> parts = token.split('.');
     if (parts.length == 3) {
       String payload = parts[1];
-      String decoded = utf8.decode(base64Url.decode(base64Url.normalize(payload)));
+      String decoded =
+          utf8.decode(base64Url.decode(base64Url.normalize(payload)));
       Map<String, dynamic> decodedMap = json.decode(decoded);
       int exp = decodedMap['exp'];
       DateTime expiryDate = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
@@ -120,69 +125,135 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
     } else {
-      print("Keycloak token invalid or missing. Redirecting to Google sign-in.");
+      print(
+          "Keycloak token invalid or missing. Redirecting to Google sign-in.");
       await handleSignIn();
     }
   }
 
+  // Future<void> handleSignIn() async {
+  //   try {
+  //     var googleAccessToken = await _getGoogleAccessToken();
+  //     print(googleAccessToken.toString());
+
+  //     if (googleAccessToken != null) {
+  //       await fetchGoogleUserData(googleAccessToken);
+  //       final clientAccessToken = await _getClientAccessToken();
+  //       if (clientAccessToken != null) {
+  //         final userExists = await _checkIfUserExistsInKeycloak(
+  //         googleEmail,
+  //         clientAccessToken,
+  //       );
+  //       if (userExists) {
+  //         final userLinked = await isUserLinkedToIdentityProvider(
+  //             clientAccessToken, kcUserId);
+  //         if (!userLinked) {
+  //           await linkUserToGoogleIdentityProvider(clientAccessToken, kcUserId, googleId, googleUserName);
+  //         }
+          
+  //         var keycloakTokens =
+  //               await _exchangeGoogleTokenForKeycloakTokens(googleAccessToken);
+
+  //           if (keycloakTokens != null &&
+  //               keycloakTokens['access_token'] != null &&
+  //               keycloakTokens['refresh_token'] != null &&
+  //               keycloakTokens['email'] != null) {
+  //             print('User exists in Keycloak. Redirecting to homepage.');
+  //             setLocalStorage(
+  //                 'keycloakAccessToken', keycloakTokens['access_token']);
+  //             setLocalStorage(
+  //                 'keycloakRefreshToken', keycloakTokens['refresh_token']);
+  //             setLocalStorage('googleAccessToken', googleAccessToken);
+  //             setLocalStorage('email', keycloakTokens['email']);
+  //             setLocalStorage('logoutBool', "false");
+  //             await passTokensBackToMainApp();
+  //             await Navigator.pushReplacement(
+  //               context,
+  //               MaterialPageRoute(
+  //                 builder: (context) => HomePage(
+  //                   googleAccessToken: googleAccessToken,
+  //                   keycloakAccessToken: keycloakTokens['access_token'],
+  //                   keycloakRefreshToken: keycloakTokens['refresh_token'],
+  //                   email: keycloakTokens['email'],
+  //                 ),
+  //               ),
+  //             );
+  //           }
+  //       } else {
+  //         print('User does not exist in Keycloak.');
+  //         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+  //             content: Text("Please register to use this application.")));
+  //         // await _addUserToKeycloak(keycloakTokens, clientAccessToken);
+  //       }
+  //       }
+  //     }
+  //   } catch (error) {
+  //     print('Error during sign-in: $error');
+  //   }
+  // }
+
   Future<void> handleSignIn() async {
-    try {
-      var googleAccessToken = await _getGoogleAccessToken();
-      print(googleAccessToken.toString());
+  try {
+    var googleAccessToken = await _getGoogleAccessToken();
+    print(googleAccessToken.toString());
 
-      if (googleAccessToken != null) {
-        var keycloakTokens = await _exchangeGoogleTokenForKeycloakTokens(googleAccessToken);
-
-        if (keycloakTokens != null &&
-            keycloakTokens['access_token'] != null &&
-            keycloakTokens['refresh_token'] != null &&
-            keycloakTokens['email'] != null) {
-          final clientAccessToken = await _getClientAccessToken();
-
-          if (clientAccessToken != null) {
-            final userExists = await _checkIfUserExistsInKeycloak(
-              keycloakTokens['email'],
-              clientAccessToken,
-            );
-
-            if (userExists) {
-              print('User exists in Keycloak. Redirecting to homepage.');
-              setLocalStorage('keycloakAccessToken', keycloakTokens['access_token']);
-              setLocalStorage('keycloakRefreshToken', keycloakTokens['refresh_token']);
-              setLocalStorage('googleAccessToken', googleAccessToken);
-              setLocalStorage('email', keycloakTokens['email']);
-              setLocalStorage('logoutBool', "false");
-              await passTokensBackToMainApp();
-              await Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => HomePage(
-                    googleAccessToken: googleAccessToken,
-                    keycloakAccessToken: keycloakTokens['access_token'],
-                    keycloakRefreshToken: keycloakTokens['refresh_token'],
-                    email: keycloakTokens['email'],
-                  ),
-                ),
-              );
-            } else {
-              print('User does not exist in Keycloak. Adding user.');
-              await _addUserToKeycloak(keycloakTokens, clientAccessToken);
-            }
+    if (googleAccessToken != null) {
+      await fetchGoogleUserData(googleAccessToken);
+      final clientAccessToken = await _getClientAccessToken();
+      if (clientAccessToken != null) {
+        final userExists = await _checkIfUserExistsInKeycloak(googleEmail, clientAccessToken);
+        if (userExists) {
+          final userLinked = await isUserLinkedToIdentityProvider(clientAccessToken, kcUserId);
+          if (!userLinked) {
+            // If the user is not linked, link the user to Google first
+            await linkUserToGoogleIdentityProvider(clientAccessToken, kcUserId, googleId, googleUserName);
           }
+
+          // Now, exchange the Google token for Keycloak tokens (after linking if necessary)
+          var keycloakTokens = await _exchangeGoogleTokenForKeycloakTokens(googleAccessToken);
+
+          if (keycloakTokens != null && keycloakTokens['access_token'] != null &&
+              keycloakTokens['refresh_token'] != null && keycloakTokens['email'] != null) {
+            print('User exists in Keycloak. Redirecting to homepage.');
+
+            setLocalStorage('keycloakAccessToken', keycloakTokens['access_token']);
+            setLocalStorage('keycloakRefreshToken', keycloakTokens['refresh_token']);
+            setLocalStorage('googleAccessToken', googleAccessToken);
+            setLocalStorage('email', keycloakTokens['email']);
+            setLocalStorage('logoutBool', "false");
+
+            await passTokensBackToMainApp();
+            await Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => HomePage(
+                  googleAccessToken: googleAccessToken,
+                  keycloakAccessToken: keycloakTokens['access_token'],
+                  keycloakRefreshToken: keycloakTokens['refresh_token'],
+                  email: keycloakTokens['email'],
+                ),
+              ),
+            );
+          }
+        } else {
+          print('User does not exist in Keycloak.');
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text("Please register to use this application.")));
         }
       }
-    } catch (error) {
-      print('Error during sign-in: $error');
     }
+  } catch (error) {
+    print('Error during sign-in: $error');
+  }
   }
 
   Future<String?> _getGoogleAccessToken() async {
     html.window.open(
       'https://accounts.google.com/o/oauth2/v2/auth?'
-      'client_id=950385657379-k0kk7l3nvdm8cbgp31fjvet0c5neluc7.apps.googleusercontent.com&'
-      'redirect_uri=${Config.server}:3001/callback.html&'
-      'response_type=token&'
-      'scope=email profile openid',
+          'client_id=950385657379-k0kk7l3nvdm8cbgp31fjvet0c5neluc7.apps.googleusercontent.com&'
+          'redirect_uri=${Config.server}:3001/callback.html&'
+          'response_type=token&'
+          'scope=email profile openid',
       'google_sign_in_popup',
       'width=500,height=600',
     );
@@ -214,9 +285,7 @@ class _LoginPageState extends State<LoginPage> {
         'client_secret': kcsecret,
         'subject_issuer': 'google',
       },
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
     );
     if (response.statusCode == 200) {
       var data = json.decode(response.body);
@@ -235,7 +304,8 @@ class _LoginPageState extends State<LoginPage> {
     List<String> parts = keycloakAccessToken.split('.');
     if (parts.length == 3) {
       String payload = parts[1];
-      String decoded = utf8.decode(base64Url.decode(base64Url.normalize(payload)));
+      String decoded =
+          utf8.decode(base64Url.decode(base64Url.normalize(payload)));
       Map<String, dynamic> decodedMap = json.decode(decoded);
       return decodedMap['email'];
     }
@@ -249,9 +319,7 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final response = await http.post(
         Uri.parse(keycloakTokenUrl),
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
           'client_id': kcid,
           'client_secret': kcsecret,
@@ -273,10 +341,35 @@ class _LoginPageState extends State<LoginPage> {
     return null;
   }
 
+  Future<void> fetchGoogleUserData(String accessToken) async {
+    final response = await http.get(
+      Uri.parse("https://www.googleapis.com/oauth2/v3/userinfo"),
+      headers: {"Authorization": "Bearer $accessToken"},
+    );
+
+    if (response.statusCode == 200) {
+      // Decode the JSON response
+      final Map<String, dynamic> userData = json.decode(response.body);
+
+      // Directly assign variables
+      googleId = userData['sub'];
+      googleEmail = userData['email'];
+      googleUserName = userData['name'];
+
+      // Print the values
+      print("Google ID: $googleId");
+      print("Email: $googleEmail");
+      print("Username: $googleUserName");
+    } else {
+      print("Failed to fetch user info: ${response.body}");
+    }
+  }
+
   Future<bool> _checkIfUserExistsInKeycloak(
       String email, String clientAccessToken) async {
     const String keycloakUserUrl =
         '${Config.server}:8080/admin/realms/G-SSO-Connect/users?email=';
+
     final response = await http.get(
       Uri.parse('$keycloakUserUrl$email'),
       headers: {
@@ -285,47 +378,119 @@ class _LoginPageState extends State<LoginPage> {
       },
     );
 
-    return response.statusCode == 200 && json.decode(response.body).isNotEmpty;
+    if (response.statusCode == 200) {
+      List<dynamic> users = json.decode(response.body);
+
+      if (users.isNotEmpty) {
+        kcUserId = users.first['id']; // ✅ Set the global variable
+        return true;
+      }
+    }
+
+    return false;
   }
 
-  Future<void> _addUserToKeycloak(
-      Map<String, dynamic> keycloakTokens, String clientAccessToken) async {
-    final String keycloakUserUrl =
-        '${Config.server}:8080/admin/realms/G-SSO-Connect/users';
-    final response = await http.post(
-      Uri.parse(keycloakUserUrl),
-      headers: {
-        'Authorization': 'Bearer $clientAccessToken',
-        'Content-Type': 'application/json',
-      },
-      body: json.encode({
-        'email': keycloakTokens['email'],
-        'username': keycloakTokens['email'],
-        'enabled': true,
-        'firstName': 'test',
-        'lastName': 'test',
-      }),
-    );
+  Future<bool> isUserLinkedToIdentityProvider(
+      String keycloakAdminToken, String keycloakUserId) async {
+    const String realm = "G-SSO-Connect";
 
-    if (response.statusCode == 201) {
-      print('User added successfully to Keycloak');
-    } else {
-      print('Failed to add user');
-      print(response.statusCode);
-      print(response.body);
+    final String url =
+        "${Config.server}:8080/admin/realms/$realm/users/$keycloakUserId/federated-identity";
+
+    try {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $keycloakAdminToken',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> identities = json.decode(response.body);
+
+        return identities.isNotEmpty; // ✅ Returns true if linked, false if not
+      } else {
+        throw Exception(
+            "Failed to fetch federated identities: ${response.statusCode} - ${response.reasonPhrase}");
+      }
+    } catch (error) {
+      throw Exception("Error checking identity provider linkage: $error");
     }
   }
 
-  Future<void> passTokensBackToMainApp() async {
-  final keycloakAccessToken = await getLocalStorage('keycloakAccessToken');
-  final keycloakEmail = await getLocalStorage('email');
-  
-  // Sending tokens back to port 3000 (main app) via window messaging
-  html.window.postMessage({
-    'keycloakAccessToken': keycloakAccessToken,
-    'email': keycloakEmail,
-  }, '*');
+  Future<void> linkUserToGoogleIdentityProvider(
+    String keycloakAdminToken, String keycloakUserId, String googleUserId, String googleUserName) async {
+
+  final String url =
+      "${Config.server}:8080/admin/realms/G-SSO-Connect/users/$keycloakUserId/federated-identity/google";
+
+  final Map<String, dynamic> requestBody = {
+    "identityProvider": "google",
+    "userId": googleUserId,
+    "userName": googleUserName
+  };
+
+  try {
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer $keycloakAdminToken',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode(requestBody),
+    );
+
+    if (response.statusCode == 204) {
+      print("✅ User successfully linked to Google.");
+    } else {
+      print("❌ Failed to link user to Google: ${response.statusCode} - ${response.body}");
+    }
+  } catch (error) {
+    print("🚨 Error linking user to Google: $error");
+  }
 }
+
+
+
+  // Future<void> _addUserToKeycloak(
+  //     Map<String, dynamic> keycloakTokens, String clientAccessToken) async {
+  //   final String keycloakUserUrl =
+  //       '${Config.server}:8080/admin/realms/G-SSO-Connect/users';
+  //   final response = await http.post(
+  //     Uri.parse(keycloakUserUrl),
+  //     headers: {
+  //       'Authorization': 'Bearer $clientAccessToken',
+  //       'Content-Type': 'application/json',
+  //     },
+  //     body: json.encode({
+  //       'email': keycloakTokens['email'],
+  //       'username': keycloakTokens['email'],
+  //       'enabled': true,
+  //       'firstName': 'test',
+  //       'lastName': 'test',
+  //     }),
+  //   );
+
+  //   if (response.statusCode == 201) {
+  //     print('User added successfully to Keycloak');
+  //   } else {
+  //     print('Failed to add user');
+  //     print(response.statusCode);
+  //     print(response.body);
+  //   }
+  // }
+
+  Future<void> passTokensBackToMainApp() async {
+    final keycloakAccessToken = await getLocalStorage('keycloakAccessToken');
+    final keycloakEmail = await getLocalStorage('email');
+
+    // Sending tokens back to port 3000 (main app) via window messaging
+    html.window.postMessage({
+      'keycloakAccessToken': keycloakAccessToken,
+      'email': keycloakEmail,
+    }, '*');
+  }
 
   @override
   Widget build(BuildContext context) {
