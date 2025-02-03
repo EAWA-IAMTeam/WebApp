@@ -1,0 +1,169 @@
+
+import 'dart:html'; // For local storage
+import 'dart:convert'; // For JSON encoding/decoding
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(ProductApp());
+}
+
+class ProductApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: ProductScreen(),
+    );
+  }
+}
+
+class ProductScreen extends StatefulWidget {
+  @override
+  _ProductScreenState createState() => _ProductScreenState();
+}
+
+class _ProductScreenState extends State<ProductScreen> {
+  List<Map<String, dynamic>> allProducts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadAllProducts();
+  }
+
+void loadAllProducts() {
+  // Retrieve and decode all products from localStorage
+  final storedData = window.localStorage['allProducts'] ?? "[]";
+  
+  // Explicitly cast to List<Map<String, dynamic>> after decoding
+  setState(() {
+    allProducts = List<Map<String, dynamic>>.from(
+      jsonDecode(storedData).map((product) => Map<String, dynamic>.from(product))
+    );
+  });
+}
+
+
+  void saveProduct(String productList, String description, int quantity, double cost) {
+    Map<String, dynamic> newProduct = {
+      "productList": productList,
+      "description": description,
+      "quantity": quantity,
+      "cost": cost
+    };
+
+    allProducts.add(newProduct);
+    window.localStorage['allProducts'] = jsonEncode(allProducts);
+    loadAllProducts();
+  }
+
+  void clearAllProducts() {
+    window.localStorage.remove('allProducts');
+    setState(() {
+      allProducts = [];
+    });
+  }
+
+  void showAddProductDialog() {
+    TextEditingController productListController = TextEditingController();
+    TextEditingController descriptionController = TextEditingController();
+    TextEditingController quantityController = TextEditingController();
+    TextEditingController costController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Add New Product"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: productListController,
+                decoration: InputDecoration(labelText: "Enter Product List Name (e.g., product13)"),
+              ),
+              TextField(
+                controller: descriptionController,
+                decoration: InputDecoration(labelText: "Description"),
+              ),
+              TextField(
+                controller: quantityController,
+                decoration: InputDecoration(labelText: "Quantity"),
+                keyboardType: TextInputType.number,
+              ),
+              TextField(
+                controller: costController,
+                decoration: InputDecoration(labelText: "Cost"),
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                String productList = productListController.text.trim();
+                String description = descriptionController.text.trim();
+                int quantity = int.tryParse(quantityController.text) ?? 0;
+                double cost = double.tryParse(costController.text) ?? 0.0;
+
+                if (productList.isEmpty || description.isEmpty || quantity <= 0 || cost <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Please enter valid product details.")),
+                  );
+                  return;
+                }
+
+                saveProduct(productList, description, quantity, cost);
+                Navigator.pop(context);
+              },
+              child: Text("Save"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Product Manager")),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ElevatedButton(
+              onPressed: showAddProductDialog,
+              child: Text("Add Product"),
+            ),
+            SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: clearAllProducts,
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: Text("Clear All Products"),
+            ),
+            SizedBox(height: 20),
+            Text("All Products:", style: TextStyle(fontWeight: FontWeight.bold)),
+            Expanded(
+              child: ListView.builder(
+                itemCount: allProducts.length,
+                itemBuilder: (context, index) {
+                  var product = allProducts[index];
+                  return ListTile(
+                    title: Text("${product['description']} - ${product['quantity']} - \$${product['cost']}"),
+                    subtitle: Text("List: ${product['productList']}"),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
