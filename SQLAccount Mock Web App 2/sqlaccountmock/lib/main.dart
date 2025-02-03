@@ -71,37 +71,76 @@ class _HomePageState extends State<HomePage>
     });
   }
 
-  Future<void> fetchProducts(int storeId) async {
-    try {
-      final response = await http.get(
-          Uri.parse('http://192.168.0.73:5000/api/products?store_id=$storeId'));
+  // Future<void> fetchProducts(int storeId) async {
+  //   try {
+  //     final response = await http.get(
+  //         Uri.parse('http://192.168.0.73:5000/api/products?store_id=$storeId'));
 
-      if (response.statusCode == 200) {
-        List<dynamic> data = json.decode(response.body);
-        print("Get Product successfully");
-        print(response.body);
+  //     if (response.statusCode == 200) {
+  //       List<dynamic> data = json.decode(response.body);
+  //       print("Get Product successfully");
+  //       print(response.body);
 
-        // Update the _products list and call setState
-        setState(() {
-          _products = data.map((product) {
-            return {
-              'id': product['id'],
-              'price': product['price'],
-              'discounted_price': product['discounted_price'],
-              'sku': product['sku'],
-              'currency': product['currency'],
-              'status': product['status'],
-              'stock_item_id': product['stock_item_id'],
-            };
-          }).toList();
-        });
-      } else {
-        throw Exception('Failed to load products');
-      }
-    } catch (e) {
-      throw Exception('Failed to load products: $e');
+  //       // Update the _products list and call setState
+  //       setState(() {
+  //         _products = data.map((product) {
+  //           return {
+  //             'id': product['id'],
+  //             'price': product['price'],
+  //             'discounted_price': product['discounted_price'],
+  //             'sku': product['sku'],
+  //             'currency': product['currency'],
+  //             'status': product['status'],
+  //             'stock_item_id': product['stock_item_id'],
+  //           };
+  //         }).toList();
+  //       });
+  //     } else {
+  //       throw Exception('Failed to load products');
+  //     }
+  //   } catch (e) {
+  //     throw Exception('Failed to load products: $e');
+  //   }
+  // }
+
+Future<void> fetchProducts(int storeId) async {
+  try {
+    final response = await http.get(
+        Uri.parse('http://192.168.0.73:5000/api/products?store_id=$storeId'));
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = json.decode(response.body);
+      print("Get Product successfully");
+      print(response.body);
+
+      // Extract the actual product details inside "store_products"
+      setState(() {
+        _products = [];
+        for (var stockItem in data) {
+          if (stockItem.containsKey('store_products')) {
+            for (var product in stockItem['store_products']) {
+              _products.add({
+                'id': product['id'],
+                'price': product['price'],
+                'discounted_price': product['discounted_price'],
+                'sku': product['sku'],
+                'currency': product['currency'],
+                'status': product['status'],
+                'stock_item_id': stockItem['stock_item_id'], // Link to stock item
+              });
+            }
+          }
+        }
+      });
+    } else {
+      throw Exception('Failed to load products');
     }
+  } catch (e) {
+    print('Error fetching products: $e');
+    throw Exception('Failed to load products: $e');
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
