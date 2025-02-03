@@ -4,6 +4,9 @@ import (
 	"net/http"
 	"strings"
 
+	"auth_ecommerce/models"
+
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 )
 
@@ -14,5 +17,19 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer") {
 			return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Missing or invalid token"})
 		}
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
+		claims := &models.Claims{}
+		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+			return jwtKey, nil
+		})
+
+		if err != nil || !token.Valid {
+			return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Invalid token"})
+		}
+
+		//Add user details to context
+		c.Set("user", claims)
+		return next(c)
 	}
 }
