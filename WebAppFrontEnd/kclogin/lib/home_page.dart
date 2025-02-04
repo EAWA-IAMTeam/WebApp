@@ -1,10 +1,11 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'dart:html' as html;
 import 'package:http/http.dart' as http;
 import 'package:kclogin/config.dart';
 import 'package:kclogin/login_page.dart';
+import 'package:kclogin/product/link_product.dart';
+import 'package:kclogin/store/link_stores.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
@@ -343,14 +344,25 @@ class _HomePageState extends State<HomePage> {
                           children: [
                             const SizedBox(width: 10),
                             ElevatedButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => const LinkStorePage()),
+                                );
+                              },
                               child: const Text('Link Store'),
                             ),
                             const SizedBox(width: 10),
                             ElevatedButton(
                               onPressed: () {
-                                html.window.location.href = 'http://localhost:3003';
+                                // html.window.location.href = 'http://localhost:3003';
                                 // _launchURL();
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => const LinkProductPage()),
+                                );
                               },
                               child: const Text('Link Inventory'),
                             ),
