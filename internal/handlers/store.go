@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"auth_ecommerce/models"
+	"auth_ecommerce/internal/models"
 	"database/sql"
 	"log"
 	"net/http"
