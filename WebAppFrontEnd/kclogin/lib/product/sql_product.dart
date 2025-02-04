@@ -6,7 +6,8 @@ class SQLProductList extends StatelessWidget {
   final dynamic selectedProduct;
   final Function(dynamic) onSelect;
 
-  const SQLProductList({super.key, 
+  const SQLProductList({
+    super.key,
     required this.products,
     required this.onFetch,
     required this.selectedProduct,
@@ -18,11 +19,11 @@ class SQLProductList extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Text('SQL Inventory', style: TextStyle(fontWeight: FontWeight.bold)),
-          ElevatedButton(
-            onPressed: () => onFetch(),
-            child: Text('Fetch SQL Products'),
-          ),
+          // Text('SQL Inventory', style: TextStyle(fontWeight: FontWeight.bold)),
+          // ElevatedButton(
+          //   onPressed: () => onFetch(),
+          //   child: Text('Fetch SQL Products'),
+          // ),
           Expanded(
             child: products.isEmpty
                 ? Center(child: Text('No Data'))

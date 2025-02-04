@@ -367,12 +367,12 @@ class _HomePageState extends State<HomePage> {
                               child: const Text('Link Inventory'),
                             ),
                             const SizedBox(width: 10),
-                            ElevatedButton(
-                              onPressed: () {
-                                _callApiWithToken();
-                              },
-                              child: const Text('Connect with APISIX'),
-                            ),
+                            // ElevatedButton(
+                            //   onPressed: () {
+                            //     _callApiWithToken();
+                            //   },
+                            //   child: const Text('Connect with APISIX'),
+                            // ),
                           ],
                         ),
                         // Second Row Logout

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'services.dart'; // Import the services.dart file
 
 class MappedProductsPage extends StatefulWidget {
   final int storeId; // Pass storeId as parameter to the page
@@ -18,41 +17,7 @@ class _MappedProductsPageState extends State<MappedProductsPage> {
   void initState() {
     super.initState();
     // Fetch products when the widget is initialized
-    mappedProducts = fetchProducts(widget.storeId);
-  }
-
-  Future<List<Map<String, dynamic>>> fetchProducts(int storeId) async {
-    try {
-      final response = await http.get(
-          Uri.parse('http://192.168.0.73:5000/api/products?store_id=$storeId'));
-
-      if (response.statusCode == 200) {
-        List<dynamic> data = json.decode(response.body);
-        return data.map((product) {
-          return {
-            'quantity': product['quantity'],
-            'ref_cost': product['ref_cost'],
-            'ref_price': product['ref_price'],
-            'stock_item_id': product['stock_item_id'],
-            'store_products': (product['store_products'] as List<dynamic>)
-                .map((storeProduct) {
-              return {
-                'id': storeProduct['id'],
-                'price': storeProduct['price'],
-                'discounted_price': storeProduct['discounted_price'],
-                'sku': storeProduct['sku'],
-                'currency': storeProduct['currency'],
-                'status': storeProduct['status'],
-              };
-            }).toList(),
-          };
-        }).toList();
-      } else {
-        throw Exception('Failed to load products');
-      }
-    } catch (e) {
-      throw Exception('Failed to load products: $e');
-    }
+    mappedProducts = ApiService.fetchProducts(widget.storeId);
   }
 
   @override

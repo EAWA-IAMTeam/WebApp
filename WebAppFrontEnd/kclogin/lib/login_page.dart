@@ -28,7 +28,8 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    fetchKeycloakConfig();
+    // fetchKeycloakConfig();
+    initfunction();
   }
 
   Future<void> fetchKeycloakConfig() async {
@@ -356,6 +357,11 @@ class _LoginPageState extends State<LoginPage> {
     }, '*');
   }
 
+  void initfunction() async {
+       await fetchKeycloakConfig();
+      await _checkForKeycloakToken();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -363,12 +369,13 @@ class _LoginPageState extends State<LoginPage> {
         title: const Text('Keycloak Sign In'),
       ),
       body: Center(
-        child: ElevatedButton(
-          onPressed: () async {
-            await _checkForKeycloakToken();
-          },
-          child: const Text('Sign In with Google'),
-        ),
+        // child: ElevatedButton(
+        //   onPressed: () async {
+        //     await _checkForKeycloakToken();
+        //   },
+        //   child: const Text('Sign In with Google'),
+        // ),
+        child: Text('Ecommerce Web App'),
       ),
     );
   }

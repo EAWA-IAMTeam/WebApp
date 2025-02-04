@@ -90,12 +90,13 @@ class _LinkStorePageState extends State<LinkStorePage> {
   Future<void> _callApiWithToken() async {
 
     String token = widget.keycloakAccessToken;
-    if (token.isEmpty) {
+    bool isExpired = isTokenExpired(token);
+    if (isExpired) {
       token = await _refreshAccessToken() ??
           ''; // Try refreshing the token if empty
     }
 
-    if (token.isNotEmpty) {
+    if (!isExpired) {
       try {
         print('Using token: $token'); // Log token to ensure it's correct
         final response = await http.get(
@@ -119,6 +120,19 @@ class _LinkStorePageState extends State<LinkStorePage> {
     } else {
       print('No valid access token available');
     }
+  }
+
+bool isTokenExpired(String token) {
+    List<String> parts = token.split('.');
+    if (parts.length == 3) {
+      String payload = parts[1];
+      String decoded = utf8.decode(base64Url.decode(base64Url.normalize(payload)));
+      Map<String, dynamic> decodedMap = json.decode(decoded);
+      int exp = decodedMap['exp'];
+      DateTime expiryDate = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
+      return DateTime.now().isAfter(expiryDate);
+    }
+    return true;
   }
 
   void updateSearchQuery(String query) {
