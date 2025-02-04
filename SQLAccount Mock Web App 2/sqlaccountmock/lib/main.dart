@@ -203,6 +203,24 @@ void saveProduct(String stockCode, String description, int quantity, double cost
     );
   }
 
+  void sendProductsToBackend() async {
+  // Retrieve user input from local storage
+  final storedData = html.window.localStorage['allProducts'] ?? '[]';
+  List<Map<String, dynamic>> products = List<Map<String, dynamic>>.from(jsonDecode(storedData));
+
+  // Send only user input to backend
+  final response = await http.post(
+    Uri.parse("http://localhost:8013/products"),
+    headers: {"Content-Type": "application/json"},
+    body: jsonEncode(products),
+  );
+
+  if (response.statusCode == 200) {
+    print("Products successfully sent!");
+  } else {
+    print("Error sending products: ${response.body}");
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -357,7 +375,9 @@ void saveProduct(String stockCode, String description, int quantity, double cost
               ),
               const SizedBox(height: 10),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  sendProductsToBackend();
+                },
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(4),
