@@ -22,7 +22,7 @@ type NatsClient interface {
 	Publish(subject string, msg []byte) error
 	Subscribe(subject string, handler func(msg *nats.Msg)) (*nats.Subscription, error)
 	Request(subject string, msg []byte) (*nats.Msg, error)
-	Authorize(authSubject string, requestPayload []byte) (bool, error)
+	// Authorize(authSubject string, requestPayload []byte) (bool, error)
 	Disconnect()
 }
 
@@ -49,13 +49,13 @@ func (n *natsClient) Request(subject string, msg []byte) (*nats.Msg, error) {
 }
 
 // Authorize sends an authorization request and returns the result.
-func (n *natsClient) Authorize(authSubject string, requestPayload []byte) (bool, error) {
-	response, err := n.Request(authSubject, requestPayload)
-	if err != nil {
-		return false, err
-	}
-	return string(response.Data) == "authorized", nil
-}
+// func (n *natsClient) Authorize(authSubject string, requestPayload []byte) (bool, error) {
+// 	response, err := n.Request(authSubject, requestPayload)
+// 	if err != nil {
+// 		return false, err
+// 	}
+// 	return string(response.Data) == "authorized", nil
+// }
 
 // Disconnect closes the connection to NATS.
 func (n *natsClient) Disconnect() {
