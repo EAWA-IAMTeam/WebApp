@@ -19,7 +19,7 @@ func main() {
 
 	// Enable CORS with middleware
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"http://localhost:8020"}, // Replace with the URL of your frontend
+		AllowOrigins: []string{"http://localhost:3003"}, // Replace with the URL of your frontend
 		AllowMethods: []string{echo.GET, echo.POST},     // Allow only GET and POST methods
 	}))
 

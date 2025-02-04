@@ -206,7 +206,12 @@ void saveProduct(String stockCode, String description, int quantity, double cost
   void sendProductsToBackend() async {
   // Retrieve user input from local storage
   final storedData = html.window.localStorage['allProducts'] ?? '[]';
+  
+  // Decode the JSON into a list of maps
   List<Map<String, dynamic>> products = List<Map<String, dynamic>>.from(jsonDecode(storedData));
+
+  // Ensure the data is in the right format
+  print('Sending products: $products');
 
   // Send only user input to backend
   final response = await http.post(

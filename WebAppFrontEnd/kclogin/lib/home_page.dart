@@ -260,7 +260,7 @@ class _HomePageState extends State<HomePage> {
         print('Using token: $token'); // Log token to ensure it's correct
         final response = await http.get(
           Uri.parse(
-              'http:/example.com:9080/headers'), // http:/example.com:9080/lazada/fetch-products
+              'http://192.168.0.196:9080'), // http:/example.com:9080/lazada/fetch-products
           headers: {'Authorization': 'Bearer $token'},
         );
 
