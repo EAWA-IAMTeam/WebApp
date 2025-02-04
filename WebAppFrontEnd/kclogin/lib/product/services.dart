@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:kclogin/config.dart';
 
 class ApiService {
   static Future<List<dynamic>> fetchSQLProducts(String url) async {
@@ -39,8 +40,8 @@ class ApiService {
 
   static Future<List<Map<String, dynamic>>> fetchProducts(int storeId) async {
     try {
-      final response = await http
-          .get(Uri.parse('http://192.168.0.73:5000/api/products/$storeId'));
+      final response =
+          await http.get(Uri.parse('${Config.apiBaseUrl}/products/$storeId'));
 
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
@@ -70,6 +71,7 @@ class ApiService {
       throw Exception('Failed to load products: $e');
     }
   }
+  
   static Future<List<dynamic>> fetchStores(String url) async {
     final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {

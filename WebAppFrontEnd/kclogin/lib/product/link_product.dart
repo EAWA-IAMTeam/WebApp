@@ -7,6 +7,7 @@ import 'package:kclogin/product/sql_product.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:html' as html;
 
+
 class LinkProductPage extends StatefulWidget {
   const LinkProductPage({super.key});
 
@@ -208,8 +209,8 @@ class _LinkProductPageState extends State<LinkProductPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              MappedProductsPage(storeId: Config.storeId),
+                          builder: (context) => MappedProductsPage(
+                              storeId: int.parse(Config.storeId)),
                         ),
                       );
                     },

@@ -46,28 +46,46 @@ class _MappedProductsPageState extends State<MappedProductsPage> {
 
                 return Card(
                   margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  child: ListTile(
-                    title: Text(
-                      'Store Product ID: ${product['stock_item_id']}',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Column(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Text(
+                          'Store Product ID: ${product['stock_item_id']}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        SizedBox(height: 8),
                         Text('Ref. Price: ${product['ref_price']} MYR'),
                         Text('Ref. Cost: ${product['ref_cost']} MYR'),
-                        // Display SKUs for all store products
+                        SizedBox(height: 8),
+                        Divider(),
+                        Text(
+                          'Store Items:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: storeProducts.map<Widget>((storeProduct) {
-                            return Text('SKU: ${storeProduct['sku']}');
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 4.0),
+                              child: Text('SKU: ${storeProduct['sku']}'),
+                            );
                           }).toList(),
                         ),
-                        // Display currency and status only once
                         if (storeProducts.isNotEmpty) ...[
+                          SizedBox(height: 8),
                           Text('Currency: ${storeProducts[0]['currency']}'),
                           Text('Status: ${storeProducts[0]['status']}'),
                         ],
+                        SizedBox(height: 8),
                         Text('Stock Item ID: ${product['stock_item_id']}'),
                       ],
                     ),
