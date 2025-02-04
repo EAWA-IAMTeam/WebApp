@@ -9,7 +9,7 @@
     <br>
 
 2. WebAppFrontEnd
-   E-commerce Web App which includes Google Sign-in, Link Stores, Link Inventory and logout which has connected to API endpoints and database
+   E-commerce Web App which includes Google Sign-in, Link Stores, Link Inventory and logout which has connected to API endpoints and database<br>
    Backend: <br>
 
         cd otp_login/invite_code_service
