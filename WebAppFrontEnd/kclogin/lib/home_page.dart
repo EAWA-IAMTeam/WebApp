@@ -348,7 +348,7 @@ class _HomePageState extends State<HomePage> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => const LinkStorePage()),
+                                      builder: (context) => LinkStorePage(keycloakAccessToken: widget.keycloakAccessToken, keycloakRefreshToken: widget.keycloakRefreshToken,)),
                                 );
                               },
                               child: const Text('Link Store'),
