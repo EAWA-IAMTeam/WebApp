@@ -275,6 +275,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"otp_login/invite_code_service/handler"
 	"strconv"
 	"strings"
 	"time"
@@ -499,6 +500,7 @@ func main() {
 	e.POST("/setCookie", setPersistentCookies)
 	e.GET("/getCookie", getCookies)
 	e.DELETE("/deleteCookie", deleteCookies)
+	e.POST("/user", handler.SaveUser)
 	fmt.Println("Server running at http://localhost:3002")
 	// Start server
 	e.Logger.Fatal(e.Start(":3002"))

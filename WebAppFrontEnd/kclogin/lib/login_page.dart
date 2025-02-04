@@ -3,6 +3,7 @@ import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:kclogin/config.dart';
 import 'package:kclogin/home_page.dart';
 
@@ -21,6 +22,8 @@ class _LoginPageState extends State<LoginPage> {
   String googleEmail = '';
   String googleUserName = '';
   String kcUserId = '';
+  String first_name = '';
+  String last_name = '';
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile', 'openid'],
   );
@@ -54,7 +57,8 @@ class _LoginPageState extends State<LoginPage> {
     List<String> parts = token.split('.');
     if (parts.length == 3) {
       String payload = parts[1];
-      String decoded = utf8.decode(base64Url.decode(base64Url.normalize(payload)));
+      String decoded =
+          utf8.decode(base64Url.decode(base64Url.normalize(payload)));
       Map<String, dynamic> decodedMap = json.decode(decoded);
       int exp = decodedMap['exp'];
       DateTime expiryDate = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
@@ -83,7 +87,9 @@ class _LoginPageState extends State<LoginPage> {
     if (logoutBool == "true") {
       print("Redirecting to Google sign-in due to logoutBool.");
       await handleSignIn();
-    } else if (keycloakAccessToken != null && keycloakEmail != null && !isTokenExpired(keycloakAccessToken)) {
+    } else if (keycloakAccessToken != null &&
+        keycloakEmail != null &&
+        !isTokenExpired(keycloakAccessToken)) {
       print("Redirecting to HomePage.");
       Navigator.pushReplacement(
         context,
@@ -97,7 +103,8 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
     } else {
-      print("Keycloak token invalid or missing. Redirecting to Google sign-in.");
+      print(
+          "Keycloak token invalid or missing. Redirecting to Google sign-in.");
       await handleSignIn();
     }
   }
@@ -111,25 +118,40 @@ class _LoginPageState extends State<LoginPage> {
         await fetchGoogleUserData(googleAccessToken);
         final clientAccessToken = await _getClientAccessToken();
         if (clientAccessToken != null) {
-          final userExists = await _checkIfUserExistsInKeycloak(googleEmail, clientAccessToken);
+          final userExists = await _checkIfUserExistsInKeycloak(
+              googleEmail, clientAccessToken);
           if (userExists) {
-            final userLinked = await isUserLinkedToIdentityProvider(clientAccessToken, kcUserId);
+            final userLinked = await isUserLinkedToIdentityProvider(
+                clientAccessToken, kcUserId);
             if (!userLinked) {
-              await linkUserToGoogleIdentityProvider(clientAccessToken, kcUserId, googleId, googleUserName);
+              await linkUserToGoogleIdentityProvider(
+                  clientAccessToken, kcUserId, googleId, googleUserName);
             }
 
-            var keycloakTokens = await _exchangeGoogleTokenForKeycloakTokens(googleAccessToken);
+            var keycloakTokens =
+                await _exchangeGoogleTokenForKeycloakTokens(googleAccessToken);
 
-            if (keycloakTokens != null && keycloakTokens['access_token'] != null &&
-                keycloakTokens['refresh_token'] != null && keycloakTokens['email'] != null) {
+            if (keycloakTokens != null &&
+                keycloakTokens['access_token'] != null &&
+                keycloakTokens['refresh_token'] != null &&
+                keycloakTokens['email'] != null) {
               print('User exists in Keycloak. Redirecting to homepage.');
 
-              setLocalStorage('keycloakAccessToken', keycloakTokens['access_token']);
-              setLocalStorage('keycloakRefreshToken', keycloakTokens['refresh_token']);
+              setLocalStorage(
+                  'keycloakAccessToken', keycloakTokens['access_token']);
+              setLocalStorage(
+                  'keycloakRefreshToken', keycloakTokens['refresh_token']);
               setLocalStorage('googleAccessToken', googleAccessToken);
               setLocalStorage('email', keycloakTokens['email']);
               setLocalStorage('logoutBool', "false");
+              // Decode the token
+              Map<String, dynamic> decodedToken =
+                  JwtDecoder.decode(keycloakTokens['access_token']);
 
+              // Access the claims
+              first_name = decodedToken['given_name'];
+              last_name = decodedToken['family_name'];
+              sendUserToBackend(googleEmail, first_name, last_name);
               await passTokensBackToMainApp();
               await Navigator.pushReplacement(
                 context,
@@ -146,7 +168,8 @@ class _LoginPageState extends State<LoginPage> {
           } else {
             print('User does not exist in Keycloak.');
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text("Please contact our support team for more information. +603-3341 6909")));
+                content: Text(
+                    "Please contact our support team for more information. +603-3341 6909")));
           }
         }
       }
@@ -170,7 +193,8 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<Map<String, dynamic>?> _exchangeGoogleTokenForKeycloakTokens(String googleAccessToken) async {
+  Future<Map<String, dynamic>?> _exchangeGoogleTokenForKeycloakTokens(
+      String googleAccessToken) async {
     const String keycloakUrl =
         '${Config.server}:8080/realms/G-SSO-Connect/protocol/openid-connect/token';
 
@@ -201,7 +225,8 @@ class _LoginPageState extends State<LoginPage> {
     List<String> parts = keycloakAccessToken.split('.');
     if (parts.length == 3) {
       String payload = parts[1];
-      String decoded = utf8.decode(base64Url.decode(base64Url.normalize(payload)));
+      String decoded =
+          utf8.decode(base64Url.decode(base64Url.normalize(payload)));
       Map<String, dynamic> decodedMap = json.decode(decoded);
       return decodedMap['email'];
     }
@@ -227,7 +252,8 @@ class _LoginPageState extends State<LoginPage> {
         final data = json.decode(response.body);
         return data['access_token'];
       } else {
-        print('Failed to get access token. Status code: ${response.statusCode}');
+        print(
+            'Failed to get access token. Status code: ${response.statusCode}');
         print('Response body: ${response.body}');
       }
     } catch (e) {
@@ -314,37 +340,37 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<void> linkUserToGoogleIdentityProvider(
-    String keycloakAdminToken, String keycloakUserId, String googleUserId, String googleUserName) async {
+  Future<void> linkUserToGoogleIdentityProvider(String keycloakAdminToken,
+      String keycloakUserId, String googleUserId, String googleUserName) async {
+    final String url =
+        "${Config.server}:8080/admin/realms/G-SSO-Connect/users/$keycloakUserId/federated-identity/google";
 
-  final String url =
-      "${Config.server}:8080/admin/realms/G-SSO-Connect/users/$keycloakUserId/federated-identity/google";
+    final Map<String, dynamic> requestBody = {
+      "identityProvider": "google",
+      "userId": googleUserId,
+      "userName": googleUserName
+    };
 
-  final Map<String, dynamic> requestBody = {
-    "identityProvider": "google",
-    "userId": googleUserId,
-    "userName": googleUserName
-  };
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $keycloakAdminToken',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode(requestBody),
+      );
 
-  try {
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {
-        'Authorization': 'Bearer $keycloakAdminToken',
-        'Content-Type': 'application/json',
-      },
-      body: json.encode(requestBody),
-    );
-
-    if (response.statusCode == 204) {
-      print("✅ User successfully linked to Google.");
-    } else {
-      print("❌ Failed to link user to Google: ${response.statusCode} - ${response.body}");
+      if (response.statusCode == 204) {
+        print("✅ User successfully linked to Google.");
+      } else {
+        print(
+            "❌ Failed to link user to Google: ${response.statusCode} - ${response.body}");
+      }
+    } catch (error) {
+      print("🚨 Error linking user to Google: $error");
     }
-  } catch (error) {
-    print("🚨 Error linking user to Google: $error");
   }
-}
 
   Future<void> passTokensBackToMainApp() async {
     final keycloakAccessToken = await getLocalStorage('keycloakAccessToken');
@@ -357,9 +383,35 @@ class _LoginPageState extends State<LoginPage> {
     }, '*');
   }
 
+void sendUserToBackend(String email, String firstName, String lastName) async {
+  // Prepare the user data to send to the backend
+  Map<String, String> userInfo = {
+    'email': email,
+    'first_name': firstName,
+    'last_name': lastName,
+  };
+
+  // Print the data to verify it's correct
+  print('Sending user info: $userInfo');
+  
+  // Send the user data to the backend
+  final response = await http.post(
+    Uri.parse("${Config.server}:3002/user"),
+    headers: {"Content-Type": "application/json"},
+    body: jsonEncode(userInfo),
+  );
+  print(response.statusCode);
+
+  if (response.statusCode == 200) {
+    print("User info successfully sent!");
+  } else {
+    print("Error sending user info: ${response.body}");
+  }
+}
+
   void initfunction() async {
-       await fetchKeycloakConfig();
-      await _checkForKeycloakToken();
+    await fetchKeycloakConfig();
+    await _checkForKeycloakToken();
   }
 
   @override

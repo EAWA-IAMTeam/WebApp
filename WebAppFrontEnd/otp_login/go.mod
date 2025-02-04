@@ -1,4 +1,4 @@
-module invite_code_service
+module otp_login
 
 go 1.23.2
 
@@ -9,6 +9,7 @@ require (
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/labstack/echo/v4 v4.13.3 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
+	github.com/lib/pq v1.10.9
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/rs/cors v1.11.1 // indirect
