@@ -24,17 +24,17 @@ type natsClient struct {
 }
 
 // NewNatsClient initializes a NATS client
-func NewNatsClient(cfg *config.NatsConfig) (Client, error) {
+func NewNatsClient(cfg *config.Config) (Client, error) {
 	log.Println("Connecting to NATS...")
 
-	nc, err := nats.Connect(cfg.URL())
+	nc, err := nats.Connect(cfg.NatsURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to NATS: %w", err)
 	}
 
 	srv, err := micro.AddService(nc, micro.Config{
-		Name:    cfg.Name(),
-		Version: cfg.Version(),
+		Name:    cfg.ServiceName,
+		Version: cfg.Version,
 	})
 	if err != nil {
 		nc.Close()
