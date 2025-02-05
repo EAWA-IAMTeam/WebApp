@@ -3,8 +3,10 @@ import 'package:http/http.dart' as http;
 import 'package:kclogin/config.dart';
 
 class ApiService {
-  static Future<List<dynamic>> fetchSQLProducts(String url) async {
-    final response = await http.get(Uri.parse(url));
+  static Future<List<dynamic>> fetchSQLProducts(
+      String url, String token) async {
+    final response = await http
+        .get(Uri.parse(url), headers: {'Authorization': 'Bearer $token'});
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
@@ -13,8 +15,9 @@ class ApiService {
   }
 
   static Future<Map<String, List<dynamic>>> fetchPlatformProducts(
-      String url) async {
-    final response = await http.get(Uri.parse(url));
+      String url, String token) async {
+    final response = await http
+        .get(Uri.parse(url), headers: {'Authorization': 'Bearer $token'});
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return {
@@ -26,22 +29,29 @@ class ApiService {
     }
   }
 
-  static Future<void> mapProducts(String url, Map<String, dynamic> body) async {
+  static Future<void> mapProducts(
+      String url, Map<String, dynamic> body, String token) async {
     final response = await http.post(
       Uri.parse(url),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token'
+      },
       body: json.encode(body),
     );
-
+    print(response.body);
     if (response.statusCode != 201) {
       throw Exception('Failed to map products: ${response.body}');
     }
   }
 
-  static Future<List<Map<String, dynamic>>> fetchProducts(int storeId) async {
+  static Future<List<Map<String, dynamic>>> fetchProducts(
+      int storeId, String token) async {
     try {
-      final response =
-          await http.get(Uri.parse('${Config.apiBaseUrl}/products/$storeId'));
+      final response = await http.get(
+        Uri.parse('${Myconfig.apiBaseUrl}/products/store/$storeId'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
 
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
@@ -71,7 +81,7 @@ class ApiService {
       throw Exception('Failed to load products: $e');
     }
   }
-  
+
   static Future<List<dynamic>> fetchStores(String url) async {
     final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
