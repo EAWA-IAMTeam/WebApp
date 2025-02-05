@@ -3,8 +3,9 @@ import 'services.dart'; // Import the services.dart file
 
 class MappedProductsPage extends StatefulWidget {
   final int storeId; // Pass storeId as parameter to the page
+  final String keycloakAccessToken;
 
-  const MappedProductsPage({super.key, required this.storeId});
+  const MappedProductsPage({super.key, required this.storeId, required this.keycloakAccessToken});
 
   @override
   _MappedProductsPageState createState() => _MappedProductsPageState();
@@ -17,7 +18,7 @@ class _MappedProductsPageState extends State<MappedProductsPage> {
   void initState() {
     super.initState();
     // Fetch products when the widget is initialized
-    mappedProducts = ApiService.fetchProducts(widget.storeId);
+    mappedProducts = ApiService.fetchProducts(widget.storeId, widget.keycloakAccessToken);
   }
 
   @override
@@ -99,3 +100,4 @@ class _MappedProductsPageState extends State<MappedProductsPage> {
     );
   }
 }
+
