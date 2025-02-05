@@ -275,6 +275,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"otp_login/invite_code_service/database"
 	"otp_login/invite_code_service/handler"
 	"strconv"
 	"strings"
@@ -481,6 +482,9 @@ func deleteCookies(c echo.Context) error {
 }
 
 func main() {
+
+	database.InitializeDB()
+	
 	e := echo.New()
 
 	// Middleware
