@@ -67,7 +67,7 @@ class _LinkProductPageState extends State<LinkProductPage> {
   }
 
   Future<void> fetchSQLProducts() async {
-    final products = await ApiService.fetchSQLProducts(Myconfig.sqlProductsUrl, widget.keycloakAccessToken);
+    final products = await ApiService.fetchSQLProducts(Config.sqlProductsUrl, widget.keycloakAccessToken);
     setState(() {
       sqlProducts = products;
     });
@@ -75,7 +75,7 @@ class _LinkProductPageState extends State<LinkProductPage> {
 
   Future<void> fetchPlatformProducts() async {
     final products =
-        await ApiService.fetchPlatformProducts(Myconfig.platformProductsUrl, widget.keycloakAccessToken);
+        await ApiService.fetchPlatformProducts(Config.platformProductsUrl, widget.keycloakAccessToken);
     setState(() {
       platformProducts = products['unmapped_products'] ?? [];
       mappedProducts = products['mapped_products'] ?? [];
@@ -182,22 +182,22 @@ class _LinkProductPageState extends State<LinkProductPage> {
                             'price': sku['price'],
                             'discounted_price': sku['special_price'],
                             'sku': sku['ShopSku'],
-                            'currency': Myconfig.currency,
+                            'currency': Config.currency,
                             'status': sku['status']
                           };
                         }).toList();
 
                         Map<String, dynamic> requestBody = {
-                          'store_id': Myconfig.storeId,
+                          'store_id': Config.storeId,
                           'products': products,
                         };
 
                         print(requestBody);
-                        print('Response: ${(Myconfig.storeId).runtimeType}');
+                        print('Response: ${(Config.storeId).runtimeType}');
 
                         await ApiService.mapProducts(
-                            Myconfig.mapProductsUrl, requestBody, widget.keycloakAccessToken);
-                            //Myconfig.mapProductsUrl, requestBody);
+                            Config.mapProductsUrl, requestBody, widget.keycloakAccessToken);
+                            //Config.mapProductsUrl, requestBody);
                         print('Products mapped successfully');
                         await fetchPlatformProducts();
                       }
@@ -211,7 +211,7 @@ class _LinkProductPageState extends State<LinkProductPage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => MappedProductsPage(
-                              storeId: (Myconfig.storeId), keycloakAccessToken:widget.keycloakAccessToken),
+                              storeId: (Config.storeId), keycloakAccessToken:widget.keycloakAccessToken),
                         ),
                       );
                     },
