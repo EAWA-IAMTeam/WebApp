@@ -54,8 +54,9 @@ func main() {
 	//Define routes
 	e.GET("/stores", handlers.GetStores(db))
 	e.POST("/stores", handlers.CreateStoreHandler(db))
-	e.GET("/stock_items/company/:company_id", handlers.GetStockItemsByCompany(db))
+	e.GET("/products/company/:company_id", handlers.GetStockItemsByCompany(db))
 	e.GET("/products/store/:store_id", handlers.GetProducsByStore(db))
+	e.POST("/products", handlers.InsertProducts(db))
 	e.GET("/lazada/:store_id", client.GetFilteredProducts(db, iopClient))
 
 	// Start the server

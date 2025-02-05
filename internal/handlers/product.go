@@ -2,7 +2,10 @@ package handlers
 
 import (
 	"auth_ecommerce/internal/models"
+	"bytes"
 	"database/sql"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -129,4 +132,120 @@ func GetProducsByStore(db *sql.DB) echo.HandlerFunc {
 		}
 		return c.JSON(http.StatusOK, result)
 	}
+}
+
+func InsertProducts(db *sql.DB) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Read and log raw body
+		body, err := io.ReadAll(c.Request().Body)
+		if err != nil {
+			log.Printf("Failed to read request body: %v", err)
+			return c.JSON(http.StatusBadRequest, map[string]string{"message": "Failed to read request"})
+		}
+		log.Printf("Raw request body: %s", string(body))
+
+		// Restore body for binding
+		c.Request().Body = io.NopCloser(bytes.NewBuffer(body))
+
+		var req models.ProductRequest
+		if err := c.Bind(&req); err != nil {
+			log.Printf("Failed to decode request body: %v", err)
+			return c.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid request format"})
+		}
+
+		//Validate required fields
+		if req.StoreID == 0 || len(req.Products) == 0 {
+			return c.JSON(http.StatusBadRequest, map[string]string{"message": "store_id and products are required"})
+		}
+
+		result, err := insertProductBatch(db, req.StoreID, req.Products)
+		if err != nil {
+			log.Printf("Error inserting products: %v", err)
+			return c.JSON(http.StatusInternalServerError, map[string]string{"message": "Failed to insert products"})
+		}
+
+		if result.Inserted > 0 {
+			return c.JSON(http.StatusCreated, map[string]interface{}{
+				"message":    fmt.Sprintf("%d products inserted successfully", result.Inserted),
+				"duplicates": result.Duplicates,
+			})
+		}
+
+		statusCode := http.StatusInternalServerError
+		if len(result.Duplicates) > 0 {
+			statusCode = http.StatusConflict
+		}
+
+		return c.JSON(statusCode, map[string]interface{}{
+			"error":      "Failed to insert products",
+			"duplicates": result.Duplicates,
+		})
+	}
+}
+
+func insertProductBatch(db *sql.DB, storeID int64, products []models.StoreProduct) (*models.InsertResult, error) {
+	result := &models.InsertResult{
+		Inserted:   0,
+		Duplicates: make([]string, 0),
+	}
+
+	// Start a transaction
+	tx, err := db.Begin()
+	if err != nil {
+		return result, err
+	}
+	defer tx.Rollback()
+
+	// Prepare the insert statement
+	stmt, err := tx.Prepare(`
+        INSERT INTO storeproduct (store_id, stock_item_id, price, discounted_price, sku, currency, status)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `)
+	if err != nil {
+		return result, err
+	}
+	defer stmt.Close()
+
+	// Check for duplicates first
+	for _, product := range products {
+		var exists bool
+		err := tx.QueryRow(
+			"SELECT EXISTS(SELECT 1 FROM storeproduct WHERE stock_item_id = $1 AND sku = $2)",
+			product.StockItemID, product.SKU,
+		).Scan(&exists)
+		if err != nil {
+			return result, err
+		}
+		if exists {
+			result.Duplicates = append(result.Duplicates, product.SKU)
+			continue
+		}
+
+		// Insert the product
+		res, err := stmt.Exec(
+			storeID,
+			product.StockItemID,
+			product.Price,
+			product.DiscountedPrice,
+			product.SKU,
+			product.Currency,
+			product.Status,
+		)
+		if err != nil {
+			return result, err
+		}
+
+		affected, err := res.RowsAffected()
+		if err != nil {
+			return result, err
+		}
+		result.Inserted += int(affected)
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return result, err
+	}
+
+	return result, nil
 }
