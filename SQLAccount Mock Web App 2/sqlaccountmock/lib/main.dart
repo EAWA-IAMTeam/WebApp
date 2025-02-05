@@ -40,7 +40,7 @@ class _HomePageState extends State<HomePage>
   late TabController _tabController;
   late Store store;
   late Inventory inventory;
-
+  html.WindowBase? newTabWindow; // Track the new tab
   // Add a variable to store fetched mapped products
   List<Map<String, dynamic>> _products = [];
   // Add a variable to store sql stock item
@@ -49,7 +49,8 @@ class _HomePageState extends State<HomePage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 1, vsync: this); //If tab = 2, length should be changed to 2
+    _tabController = TabController(
+        length: 1, vsync: this); //If tab = 2, length should be changed to 2
     store = Store.fromJson(jsonData);
     inventory = Inventory.fromJson(jsondata);
     _listenForTokenMessage();
@@ -115,18 +116,18 @@ class _HomePageState extends State<HomePage>
   }
 
   void loadAllProducts() {
-  // Retrieve and decode all products from localStorage
-  final storedData = html.window.localStorage['allProducts'] ?? "[]";
-  
-  // Explicitly cast to List<Map<String, dynamic>> after decoding
-  setState(() {
-    allProducts = List<Map<String, dynamic>>.from(
-      jsonDecode(storedData).map((product) => Map<String, dynamic>.from(product))
-    );
-  });
-}
+    // Retrieve and decode all products from localStorage
+    final storedData = html.window.localStorage['allProducts'] ?? "[]";
 
-void saveProduct(String stockCode, String description, int quantity, double cost) {
+    // Explicitly cast to List<Map<String, dynamic>> after decoding
+    setState(() {
+      allProducts = List<Map<String, dynamic>>.from(jsonDecode(storedData)
+          .map((product) => Map<String, dynamic>.from(product)));
+    });
+  }
+
+  void saveProduct(
+      String stockCode, String description, int quantity, double cost) {
     Map<String, dynamic> newProduct = {
       "stockCode": stockCode,
       "description": description,
@@ -185,9 +186,13 @@ void saveProduct(String stockCode, String description, int quantity, double cost
                 int quantity = int.tryParse(quantityController.text) ?? 0;
                 double cost = double.tryParse(costController.text) ?? 0.0;
 
-                if (stockCode.isEmpty || description.isEmpty || quantity <= 0 || cost <= 0) {
+                if (stockCode.isEmpty ||
+                    description.isEmpty ||
+                    quantity <= 0 ||
+                    cost <= 0) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Please enter valid product details.")),
+                    SnackBar(
+                        content: Text("Please enter valid product details.")),
                   );
                   return;
                 }
@@ -204,34 +209,35 @@ void saveProduct(String stockCode, String description, int quantity, double cost
   }
 
   void sendProductsToBackend() async {
-  // Retrieve user input from local storage
-  final storedData = html.window.localStorage['allProducts'] ?? '[]';
-  
-  // Decode the JSON into a list of maps
-  List<Map<String, dynamic>> products = List<Map<String, dynamic>>.from(jsonDecode(storedData));
+    // Retrieve user input from local storage
+    final storedData = html.window.localStorage['allProducts'] ?? '[]';
 
-  // Ensure the data is in the right format
-  print('Sending products: $products');
+    // Decode the JSON into a list of maps
+    List<Map<String, dynamic>> products =
+        List<Map<String, dynamic>>.from(jsonDecode(storedData));
 
-  // Send only user input to backend
-  final response = await http.post(
-    Uri.parse("http://localhost:8013/products"),
-    headers: {"Content-Type": "application/json"},
-    body: jsonEncode(products),
-  );
+    // Ensure the data is in the right format
+    print('Sending products: $products');
 
-  if (response.statusCode == 200) {
-    print("Products successfully sent!");
-  } else {
-    print("Error sending products: ${response.body}");
+    // Send only user input to backend
+    final response = await http.post(
+      Uri.parse("http://localhost:8013/products"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(products),
+    );
+
+    if (response.statusCode == 200) {
+      print("Products successfully sent!");
+    } else {
+      print("Error sending products: ${response.body}");
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('E-Commerce'),
+        title: const Text('SQL Account'),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -284,7 +290,8 @@ void saveProduct(String stockCode, String description, int quantity, double cost
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text("Stock Code: ${product['stockCode']}",
+                                        Text(
+                                            "Stock Code: ${product['stockCode']}",
                                             style: TextStyle(
                                                 fontWeight: FontWeight.bold)),
                                         SizedBox(height: 4),
@@ -344,9 +351,13 @@ void saveProduct(String stockCode, String description, int quantity, double cost
               ElevatedButton(
                 onPressed: () {
                   // html.window.location.href = 'http://localhost:3001'; //Redirect user to another app in same tab
-                  html.window.open('http://localhost:3001',
-                      '_blank'); //Open the web app in another new window
+                  // html.window.open('http://localhost:3001', '_blank'); //Open the web app in another new window
                   //192.168.0.102:8000
+                  if (newTabWindow == null || (newTabWindow!.closed ?? true)) {
+                    // Open a new tab if it's not already open or is closed
+                    newTabWindow =
+                        html.window.open('http://localhost:3001', '_blank');
+                  }
                   _listenForTokenMessage();
                 },
                 style: ElevatedButton.styleFrom(
@@ -376,7 +387,7 @@ void saveProduct(String stockCode, String description, int quantity, double cost
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
-                child: const Text('Add Item'), 
+                child: const Text('Add Item'),
               ),
               const SizedBox(height: 10),
               ElevatedButton(
