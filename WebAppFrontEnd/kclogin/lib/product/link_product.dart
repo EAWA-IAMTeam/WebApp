@@ -7,9 +7,10 @@ import 'package:kclogin/product/sql_product.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:html' as html;
 
-
 class LinkProductPage extends StatefulWidget {
-  const LinkProductPage({super.key});
+  final String keycloakAccessToken;
+  final String keycloakRefreshToken;
+  LinkProductPage({super.key, required this.keycloakAccessToken, required this.keycloakRefreshToken});
 
   @override
   _LinkProductPageState createState() => _LinkProductPageState();
@@ -66,7 +67,7 @@ class _LinkProductPageState extends State<LinkProductPage> {
   }
 
   Future<void> fetchSQLProducts() async {
-    final products = await ApiService.fetchSQLProducts(Config.sqlProductsUrl);
+    final products = await ApiService.fetchSQLProducts(Myconfig.sqlProductsUrl, widget.keycloakAccessToken);
     setState(() {
       sqlProducts = products;
     });
@@ -74,7 +75,7 @@ class _LinkProductPageState extends State<LinkProductPage> {
 
   Future<void> fetchPlatformProducts() async {
     final products =
-        await ApiService.fetchPlatformProducts(Config.platformProductsUrl);
+        await ApiService.fetchPlatformProducts(Myconfig.platformProductsUrl, widget.keycloakAccessToken);
     setState(() {
       platformProducts = products['unmapped_products'] ?? [];
       mappedProducts = products['mapped_products'] ?? [];
@@ -87,12 +88,7 @@ class _LinkProductPageState extends State<LinkProductPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Link Product'),
-        // leading: IconButton(
-        //   icon: Icon(Icons.arrow_back),
-        //   onPressed: () {
-        //     html.window.location.href = 'http://localhost:3001';
-        //   },
-        // ),
+        
         backgroundColor: Colors.purple,
       ),
       body: Padding(
@@ -181,22 +177,27 @@ class _LinkProductPageState extends State<LinkProductPage> {
                         List<Map<String, dynamic>> products =
                             selectedPlatformProducts.map((sku) {
                           return {
-                            'stock_item_id': selectedSQLProduct['id'],
+                            'stock_item_id':
+                                selectedSQLProduct['stock_item_id'],
                             'price': sku['price'],
                             'discounted_price': sku['special_price'],
                             'sku': sku['ShopSku'],
-                            'currency': Config.currency,
-                            'status': sku.containsKey('status')
+                            'currency': Myconfig.currency,
+                            'status': sku['status']
                           };
                         }).toList();
 
                         Map<String, dynamic> requestBody = {
-                          'store_id': Config.storeId,
+                          'store_id': Myconfig.storeId,
                           'products': products,
                         };
 
+                        print(requestBody);
+                        print('Response: ${(Myconfig.storeId).runtimeType}');
+
                         await ApiService.mapProducts(
-                            Config.mapProductsUrl, requestBody);
+                            Myconfig.mapProductsUrl, requestBody, widget.keycloakAccessToken);
+                            //Myconfig.mapProductsUrl, requestBody);
                         print('Products mapped successfully');
                         await fetchPlatformProducts();
                       }
@@ -210,7 +211,7 @@ class _LinkProductPageState extends State<LinkProductPage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => MappedProductsPage(
-                              storeId: int.parse(Config.storeId)),
+                              storeId: (Myconfig.storeId), keycloakAccessToken:widget.keycloakAccessToken),
                         ),
                       );
                     },
