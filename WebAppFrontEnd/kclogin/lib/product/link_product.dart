@@ -87,8 +87,7 @@ class _LinkProductPageState extends State<LinkProductPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Link Product'),
-        
+        title: Text('Link Product'), 
         backgroundColor: Colors.purple,
       ),
       body: Padding(
