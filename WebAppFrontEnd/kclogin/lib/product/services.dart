@@ -49,7 +49,7 @@ class ApiService {
       int storeId, String token) async {
     try {
       final response = await http.get(
-        Uri.parse('${Myconfig.apiBaseUrl}/products/store/$storeId'),
+        Uri.parse('${Config.apiBaseUrl}/products/store/$storeId'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
