@@ -24,6 +24,8 @@ class _LinkStorePageState extends State<LinkStorePage> {
   String searchQuery = '';
   String kcid = '';
   String kcsecret = '';
+  String? _accessToken;
+
 
   @override
   void initState() {
@@ -53,74 +55,82 @@ class _LinkStorePageState extends State<LinkStorePage> {
   }
 
   // Function to refresh access token
-  Future<String?> _refreshAccessToken() async {
-    final refreshToken = widget.keycloakRefreshToken;
-    if (refreshToken.isNotEmpty) {
-      const url =
-          '${Config.server}:8080/realms/G-SSO-Connect/protocol/openid-connect/token';
-      try {
-        final response = await http.post(
-          Uri.parse(url),
-          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-          body: {
-            'client_id': kcid,
-            'client_secret': kcsecret,
-            'grant_type': 'refresh_token',
-            'refresh_token': refreshToken,
-          },
-        );
+Future<String?> _refreshAccessToken() async {
+  await fetchKeycloakConfig();
 
-        if (response.statusCode == 200) {
-          final responseBody = response.body;
-          // Extract the new access token from the response
-          final accessToken =
-              responseBody; // Modify this to extract the access token from JSON
-          return accessToken;
-        } else {
-          print('Failed to refresh token: ${response.statusCode}');
-        }
-      } catch (e) {
-        print('Error during token refresh: $e');
+  print("Refreshing Token...");
+  print("Refresh Token: ${widget.keycloakRefreshToken}");
+  print("Client ID: $kcid");
+  print("Client Secret: $kcsecret");
+
+  if (widget.keycloakRefreshToken.isNotEmpty) {
+    final url = '${Config.server}:8080/realms/G-SSO-Connect/protocol/openid-connect/token';
+    
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: utf8.encode(
+          'client_id=$kcid'
+          '&client_secret=$kcsecret'
+          '&grant_type=refresh_token'
+          '&refresh_token=${widget.keycloakRefreshToken}'
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final responseBody = jsonDecode(response.body);
+        final accessToken = responseBody['access_token'];
+        print("New Access Token: $accessToken");
+        return accessToken;
+      } else {
+        print('Failed to refresh token: ${response.statusCode}');
+        print('Response body: ${response.body}');
       }
+    } catch (e) {
+      print('Error during token refresh: $e');
     }
-    return null;
   }
+  return null;
+}
+
 
   // Function to call the API with the Keycloak access token
-  Future<void> _callApiWithToken() async {
+ Future<void> _callApiWithToken() async {
+  String? token = _accessToken ?? widget.keycloakAccessToken;
+  bool isExpired = isTokenExpired(token ?? '');
 
-    String token = widget.keycloakAccessToken;
-    bool isExpired = isTokenExpired(token);
-    if (isExpired) {
-      token = await _refreshAccessToken() ??
-          ''; // Try refreshing the token if empty
+  print(isExpired);
+  if (isExpired) {
+    String? refreshedToken = await _refreshAccessToken();
+    if (refreshedToken != null && refreshedToken.isNotEmpty) {
+      setState(() {
+        _accessToken = refreshedToken; // Store refreshed token in state
+      });
+      token = refreshedToken;
     }
-
-    if (!isExpired) {
-      try {
-        print('Using token: $token'); // Log token to ensure it's correct
-        final response = await http.get(
-          Uri.parse(
-              'http://192.168.0.196:9080'), // http:/example.com:9080/lazada/fetch-products
-          headers: {'Authorization': 'Bearer $token'},
-        );
-
-        if (response.statusCode == 200) {
-          print('API call successful');
-          print("APISIX response body: ${response.body}");
-          fetchStores();
-        } else {
-          print('API call failed with status: ${response.statusCode}');
-          print(
-              'Response body: ${response.body}'); // Log response body for further analysis
-        }
-      } catch (e) {
-        print('Error during API call: $e');
-      }
-    } else {
-      print('No valid access token available');
-    }
+    print("Token After Refresh: $token");
   }
+    try {
+      print('Using token: $token'); // Log token to ensure it's correct
+      final response = await http.get(
+        Uri.parse('http://192.168.0.196:9080/stores'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        print('API call successful');
+        fetchStores();
+      } else {
+        print('API call failed with status: ${response.statusCode}');
+        print('Response body: ${response.body}');
+      }
+    } catch (e) {
+      print('Error during API call: $e');
+    }
+}
+
+
 
 bool isTokenExpired(String token) {
     List<String> parts = token.split('.');
@@ -130,6 +140,7 @@ bool isTokenExpired(String token) {
       Map<String, dynamic> decodedMap = json.decode(decoded);
       int exp = decodedMap['exp'];
       DateTime expiryDate = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
+      print(expiryDate);
       return DateTime.now().isAfter(expiryDate);
     }
     return true;
