@@ -114,7 +114,7 @@ Future<String?> _refreshAccessToken() async {
     try {
       print('Using token: $token'); // Log token to ensure it's correct
       final response = await http.get(
-        Uri.parse('http://192.168.0.196:9080/stores'),
+        Uri.parse(Config.storesUrl),
         headers: {'Authorization': 'Bearer $token'},
       );
 

@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'dart:html' as html;
 import 'package:http/http.dart' as http;
 import 'package:kclogin/config.dart';
+import 'package:kclogin/create_user.dart';
 import 'package:kclogin/login_page.dart';
 import 'package:kclogin/product/link_product.dart';
 import 'package:kclogin/store/link_stores.dart';
+import 'package:kclogin/update_user.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
@@ -342,6 +344,28 @@ class _HomePageState extends State<HomePage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
+                            const SizedBox(width: 10),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => UpdateUserPage()),
+                                );
+                              },
+                              child: const Text('Update User'),
+                            ),
+                            const SizedBox(width: 10),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => CreateUserPage()),
+                                );
+                              },
+                              child: const Text('Create User'),
+                            ),
                             const SizedBox(width: 10),
                             ElevatedButton(
                               onPressed: () {
