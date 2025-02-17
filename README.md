@@ -22,7 +22,7 @@
 
     <br>
 
-3. Set Up
+3. Set Up<br>
    a. Backend
       - Add own .env file in otp_login/scripts with KEYCLOAK_CLIENT_ID and KEYCLOAK_CLIENT_SECRET
    
