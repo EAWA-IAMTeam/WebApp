@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:kclogin/config.dart';
+import 'package:kclogin/home/config.dart';
+import 'package:kclogin/home/controllers/auth_controller.dart';
 
 // Global variables
-String kcid = '';
-String kcsecret = '';
 String? userId;
 String storeRole = '';
 String storeName = '';
@@ -18,6 +17,7 @@ class UpdateUserPage extends StatefulWidget {
 }
 
 class _UpdateUserPageState extends State<UpdateUserPage> {
+  final authController = AuthController();
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _firstNameController = TextEditingController();
@@ -30,57 +30,10 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
   @override
   void initState() {
     super.initState();
-    fetchKeycloakConfig();
-  }
-
-  Future<void> fetchKeycloakConfig() async {
-    final url = Uri.parse('${Config.server}:3002/keycloak-config');
-    try {
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          kcid = data['KCID'];
-          kcsecret = data['KCSecret'];
-        });
-      } else {
-        print('Failed to fetch Keycloak config: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error fetching Keycloak config: $e');
-    }
-  }
-
-  Future<String?> _getClientAccessToken() async {
-    final url = Uri.parse(
-        '${Config.server}:8080/realms/G-SSO-Connect/protocol/openid-connect/token');
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
-          'client_id': kcid,
-          'client_secret': kcsecret,
-          'grant_type': 'client_credentials',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data['access_token'];
-      } else {
-        print(
-            'Failed to get access token. Status code: ${response.statusCode}');
-        print('Response body: ${response.body}');
-      }
-    } catch (e) {
-      print('Error obtaining access token: $e');
-    }
-    return null;
   }
 
   Future<void> _fetchUserByEmail() async {
-    final token = await _getClientAccessToken();
+    final token = await authController.getClientAccessToken();
     if (token == null) {
       print("Error: Token is null");
       return;
@@ -131,7 +84,7 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
       return;
     }
 
-    final token = await _getClientAccessToken();
+    final token = await authController.getClientAccessToken();
     if (token == null) {
       print("Error: Token is null");
       return;
@@ -208,7 +161,7 @@ class _UpdateUserPageState extends State<UpdateUserPage> {
       return;
     }
 
-    final token = await _getClientAccessToken();
+    final token = await authController.getClientAccessToken();
     if (token == null) {
       print("Error: Token is null");
       return;

@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:kclogin/config.dart';
+import 'package:kclogin/home/config.dart';
 
 class ApiService {
   static Future<List<dynamic>> fetchSQLProducts(
@@ -82,8 +82,8 @@ class ApiService {
     }
   }
 
-  static Future<List<dynamic>> fetchStores(String url) async {
-    final response = await http.get(Uri.parse(url));
+  static Future<List<dynamic>> fetchStores(String url, String token) async {
+    final response = await http.get(Uri.parse(url),headers: {'Authorization': 'Bearer $token'},);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return data;

@@ -26,9 +26,10 @@ func SaveUser(c echo.Context) error {
 
 	// Prepare the query
 	_, err = tx.Exec(
-		`INSERT INTO "User" (company_id, permission, email, address, first_name, last_name, nationality, role, city, gender, phone, status, zipcode) 
+		`INSERT INTO "User" (id, company_id, permission, email, address, first_name, last_name, nationality, role, city, gender, phone, status, zipcode) 
 		VALUES ($1, $2::json, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) 
 		ON CONFLICT (email) DO NOTHING`,
+		1,
 		2,
 		json.RawMessage(`{}`), // Correctly passing an empty JSON object
 		user.Email,

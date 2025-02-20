@@ -4,6 +4,7 @@ import (
 	"backend/database"
 	"backend/modal"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -23,7 +24,8 @@ func SaveProducts(c echo.Context) error {
 
 	for _, product := range products {
 		_, err := tx.Exec(
-			"INSERT INTO stockitem (company_id, reserved_quantity, quantity, ref_cost, ref_price, weight, height, width, length, stock_code, variation1, variation2, description, platform, media_url, stock_control, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) ON CONFLICT (stock_code) DO NOTHING",
+			"INSERT INTO stockitem (id, company_id, reserved_quantity, quantity, ref_cost, ref_price, weight, height, width, length, stock_code, variation1, variation2, description, platform, media_url, stock_control, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) ON CONFLICT (stock_code) DO NOTHING",
+			product.StockCode,
 			2,
 			15,
 			product.Quantity,
@@ -43,6 +45,7 @@ func SaveProducts(c echo.Context) error {
 			true,
 		)
 		if err != nil {
+			fmt.Println("Error inserting product: %v", err) // log the actual error
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Database insert error"})
 		}
 	}

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:kclogin/config.dart';
+import 'package:kclogin/home/controllers/auth_controller.dart';
+import 'package:kclogin/home/config.dart';
 import 'package:kclogin/product/MappedProductsPage.dart';
 import 'package:kclogin/product/platform_product.dart';
 import 'package:kclogin/product/services.dart';
 import 'package:kclogin/product/sql_product.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'dart:html' as html;
 
 class LinkProductPage extends StatefulWidget {
   final String keycloakAccessToken;
@@ -25,11 +24,12 @@ class _LinkProductPageState extends State<LinkProductPage> {
   dynamic selectedSQLProduct;
   Set<dynamic> selectedPlatformProducts = {};
   String searchQuery = '';
+  final AuthController _authController = AuthController(); // Use the new controller
 
   @override
   void initState() {
     super.initState();
-    fetchSQLProducts();
+    _fetchProducts();
   }
 
   void updateSearchQuery(String query) {
@@ -64,6 +64,13 @@ class _LinkProductPageState extends State<LinkProductPage> {
             description.contains(searchQuery);
       }).toList();
     });
+  }
+
+    Future<void> _fetchProducts() async {
+    final response = await _authController.callApiWithToken(Config.sqlProductsUrl, widget.keycloakAccessToken, widget.keycloakRefreshToken);
+    if (response != null && response.statusCode == 200) {
+      fetchSQLProducts();
+    }
   }
 
   Future<void> fetchSQLProducts() async {

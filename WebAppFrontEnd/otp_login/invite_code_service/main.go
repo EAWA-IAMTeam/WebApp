@@ -505,10 +505,10 @@ func main() {
 	e.GET("/getCookie", getCookies)
 	e.DELETE("/deleteCookie", deleteCookies)
 	e.POST("/user", handler.SaveUser)
-	fmt.Println("Server running at http://192.168.0.230:3002")
+	fmt.Println("Server running at http://192.168.11.12:3002")
 	// Start server
 	//e.Logger.Fatal(e.Start(":3002")) //using localhost
-	e.Logger.Fatal(e.Start("192.168.0.230:3002")) // Using ip
+	e.Logger.Fatal(e.Start("192.168.11.12:3002")) // Using ip
 	//e.Logger.Fatal(e.Start("0.0.0.0:3002"))       //server accessible on any network
 
 }
