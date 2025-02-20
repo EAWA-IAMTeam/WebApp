@@ -24,14 +24,20 @@ class _LoginPageState extends State<LoginPage> {
         title: const Text('Keycloak Sign In'),
       ),
       body: Center(
-        // child: ElevatedButton(
-        //   onPressed: () async {
-        //     await _checkForKeycloakToken();
-        //   },
-        //   child: const Text('Sign In with Google'),
-        // ),
-        child: Text('Ecommerce Web App'),
-      ),
+          child: Column(
+        mainAxisAlignment: MainAxisAlignment.center, // Centers vertically
+        crossAxisAlignment: CrossAxisAlignment.center, // Centers horizontally
+        children: [
+          Text('Ecommerce Web App'),
+          SizedBox(height: 50,),
+          ElevatedButton(
+            onPressed: () async {
+              _loginController.checkForKeycloakToken(context);
+            },
+            child: const Text('Sign In with Google'),
+          ),
+        ],
+      )),
     );
   }
 }

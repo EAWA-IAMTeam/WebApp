@@ -15,5 +15,6 @@ static const String serverhost = "http://192.168.11.12";
   static const String currency = 'MYR';
   static const String apiBaseUrl = '$serverhost:9080';
   static const String storesUrl = '$serverhost:9080/stores';
-  static const String orderUrl = '$serverhost:9080/orders';
+  //static const String orderUrl = '$serverhost:9080/orders';
+  static const String orderUrl = 'http://192.168.0.189:9080/company/$storeId/topic/order';
 }

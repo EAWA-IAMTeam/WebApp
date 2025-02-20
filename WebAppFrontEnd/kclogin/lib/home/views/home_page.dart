@@ -103,7 +103,7 @@ final HomeController _homeController = HomeController();
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => OrdersView(keycloakAccessToken: widget.keycloakAccessToken, keycloakRefreshToken: widget.keycloakRefreshToken,)),
+                                      builder: (context) => LinkProductPage(keycloakAccessToken: widget.keycloakAccessToken, keycloakRefreshToken: widget.keycloakRefreshToken,)),
                                 );
                               },
                               child: const Text('Link Inventory'),
@@ -114,7 +114,7 @@ final HomeController _homeController = HomeController();
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => LinkProductPage(keycloakAccessToken: widget.keycloakAccessToken, keycloakRefreshToken: widget.keycloakRefreshToken,)),
+                                      builder: (context) => OrdersView(keycloakAccessToken: widget.keycloakAccessToken, keycloakRefreshToken: widget.keycloakRefreshToken,)),
                                 );
                               },
                               child: const Text('View Order'),
